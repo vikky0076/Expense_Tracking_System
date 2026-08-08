@@ -8,9 +8,10 @@ import { ExpenseModal } from "@/components/expenses/ExpenseModal";
 import { ProofViewerModal } from "@/components/expenses/ProofViewerModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
-import { PlusCircle, Receipt } from "lucide-react";
+import { PlusCircle, Receipt, Download } from "lucide-react";
 import { Expense } from "@/types";
 import { formatCurrency, getMonthLabel } from "@/lib/utils";
+import { exportExpensesToCSV } from "@/lib/csvExporter";
 
 export default function ExpensesPage() {
   const { selectedMonthExpenses, selectedMonth, deleteExpense, settings } = useFinance();
@@ -70,13 +71,23 @@ export default function ExpensesPage() {
           </p>
         </div>
 
-        <Button
-          variant="primary"
-          onClick={() => setIsAddModalOpen(true)}
-          icon={<PlusCircle className="w-4 h-4" />}
-        >
-          Add Expense
-        </Button>
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            onClick={() => exportExpensesToCSV(filtered, `expenses-${selectedMonth}.csv`)}
+            icon={<Download className="w-4 h-4 text-emerald-600" />}
+            title="Export CSV spreadsheet for filtered expenses"
+          >
+            Export CSV
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => setIsAddModalOpen(true)}
+            icon={<PlusCircle className="w-4 h-4" />}
+          >
+            Add Expense
+          </Button>
+        </div>
       </div>
 
       {/* Filter Component */}

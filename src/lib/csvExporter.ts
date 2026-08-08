@@ -18,14 +18,19 @@ export function exportExpensesToCSV(
     `"${(exp.description || "").replace(/"/g, '""')}"`,
   ]);
 
-  const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
+  // Include UTF-8 BOM (\uFEFF) for Excel & Mobile file parser compatibility
+  const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.setAttribute("href", url);
-  link.setAttribute("download", filename);
+  link.setAttribute("download", filename.endsWith(".csv") ? filename : `${filename}.csv`);
+  link.style.visibility = "hidden";
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
+  setTimeout(() => {
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, 100);
 }

@@ -14,6 +14,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ExpenseModal } from "@/components/expenses/ExpenseModal";
 import { ProofViewerModal } from "@/components/expenses/ProofViewerModal";
 import { formatCurrency, getMonthLabel } from "@/lib/utils";
+import { exportExpensesToCSV } from "@/lib/csvExporter";
 import {
   Wallet,
   Receipt,
@@ -22,6 +23,7 @@ import {
   PlusCircle,
   ArrowRight,
   Sparkles,
+  Download,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -68,11 +70,19 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Button
+            variant="outline"
+            onClick={() => exportExpensesToCSV(selectedMonthExpenses, `expenses-${selectedMonth}.csv`)}
+            className="bg-white/10 hover:bg-white/20 border-white/30 text-white shadow-xs px-4 py-3 text-xs sm:text-sm font-bold"
+            icon={<Download className="w-4 h-4 text-emerald-200" />}
+          >
+            Export CSV
+          </Button>
           <Button
             variant="secondary"
             onClick={() => setIsAddExpenseOpen(true)}
-            className="shadow-md shadow-orange-500/25 px-5 py-3 text-sm font-bold"
+            className="shadow-md shadow-orange-500/25 px-4 sm:px-5 py-3 text-xs sm:text-sm font-bold"
             icon={<PlusCircle className="w-4 h-4" />}
           >
             Add Expense
