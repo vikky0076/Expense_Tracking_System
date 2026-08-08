@@ -109,14 +109,53 @@ export default function InsightsPage() {
 
       {/* Interactive Recharts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <CategorySpendingChart />
-        <FixedVsVariableChart />
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Category Breakdown</h3>
+              <p className="text-xs text-slate-500">Expenses distributed by category</p>
+            </div>
+            <PieChart className="w-5 h-5 text-emerald-600" />
+          </div>
+          <CategorySpendingChart />
+        </Card>
+
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Fixed vs Variable Ratio</h3>
+              <p className="text-xs text-slate-500">Recurring commitments vs variable spending</p>
+            </div>
+            <Scale className="w-5 h-5 text-emerald-600" />
+          </div>
+          <FixedVsVariableChart />
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MonthlySpendingChart />
-        <DailySpendingChart />
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Monthly Spending Comparison</h3>
+              <p className="text-xs text-slate-500">Historical monthly spending totals</p>
+            </div>
+            <TrendingUp className="w-5 h-5 text-emerald-600" />
+          </div>
+          <MonthlySpendingChart />
+        </Card>
+
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Daily Spending Flow</h3>
+              <p className="text-xs text-slate-500">Day-by-day expense distribution</p>
+            </div>
+            <Activity className="w-5 h-5 text-emerald-600" />
+          </div>
+          <DailySpendingChart />
+        </Card>
       </div>
     </div>
   );
 }
+

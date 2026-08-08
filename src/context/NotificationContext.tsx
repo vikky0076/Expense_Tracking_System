@@ -65,7 +65,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (!user || isDemo) return;
       try {
         const userDocRef = doc(db, "users", user.uid);
-        await setDoc(userDocRef, { notifications: updatedNotifs, updatedAt: new Date().toISOString() }, { merge: true });
+        const sanitizedNotifs = JSON.parse(JSON.stringify(updatedNotifs));
+        await setDoc(userDocRef, { notifications: sanitizedNotifs, updatedAt: new Date().toISOString() }, { merge: true });
       } catch (e) {
         console.error("Error saving notifications to Firestore:", e);
       }

@@ -21,7 +21,7 @@ export const FixedVsVariableChart: React.FC = () => {
   ];
 
   return (
-    <div className="w-full h-72">
+    <div className="w-full h-72 min-w-0">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie

@@ -184,10 +184,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (!user || isDemo) return;
       try {
         const userDocRef = doc(db, "users", user.uid);
+        // Strip undefined fields unsupported by Firestore
+        const sanitizedData = JSON.parse(JSON.stringify(dataToUpdate));
         await setDoc(
           userDocRef,
           {
-            ...dataToUpdate,
+            ...sanitizedData,
             updatedAt: new Date().toISOString(),
           },
           { merge: true }

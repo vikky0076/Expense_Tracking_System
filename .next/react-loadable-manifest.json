@@ -1,1 +1,61 @@
-{}
+{
+  "..\\node_modules\\jspdf\\dist\\jspdf.es.min.js -> canvg": {
+    "id": 12396,
+    "files": [
+      "static/chunks/bc98253f.5b0f4fe717c5b99c.js",
+      "static/chunks/3969.04760aae00f08225.js"
+    ]
+  },
+  "..\\node_modules\\jspdf\\dist\\jspdf.es.min.js -> dompurify": {
+    "id": 11411,
+    "files": [
+      "static/chunks/1411.1195cf6f93254477.js"
+    ]
+  },
+  "..\\node_modules\\jspdf\\dist\\jspdf.es.min.js -> html2canvas": {
+    "id": 6807,
+    "files": [
+      "static/chunks/ad2866b8.df424f64adfa702a.js"
+    ]
+  },
+  "app\\export\\page.tsx -> @/lib/pdfGenerator": {
+    "id": 68946,
+    "files": [
+      "static/chunks/164f4fb6.7ad9fdc41f86a513.js",
+      "static/chunks/7951.0bd6c79cd9eaadf1.js",
+      "static/chunks/8946.f1922a2d5356ba70.js"
+    ]
+  },
+  "app\\insights\\page.tsx -> @/components/insights/CategorySpendingChart": {
+    "id": 98155,
+    "files": [
+      "static/chunks/1546.55c345c2b79491d9.js",
+      "static/chunks/5169.4ec5fb1cef285b62.js",
+      "static/chunks/8155.40d4ba80090b99e2.js"
+    ]
+  },
+  "app\\insights\\page.tsx -> @/components/insights/DailySpendingChart": {
+    "id": 15530,
+    "files": [
+      "static/chunks/1546.55c345c2b79491d9.js",
+      "static/chunks/7642.8058add2c8521f03.js",
+      "static/chunks/5530.9e9519902ff2f280.js"
+    ]
+  },
+  "app\\insights\\page.tsx -> @/components/insights/FixedVsVariableChart": {
+    "id": 64078,
+    "files": [
+      "static/chunks/1546.55c345c2b79491d9.js",
+      "static/chunks/5169.4ec5fb1cef285b62.js",
+      "static/chunks/4078.e4d1c548a9ee2ba1.js"
+    ]
+  },
+  "app\\insights\\page.tsx -> @/components/insights/MonthlySpendingChart": {
+    "id": 10345,
+    "files": [
+      "static/chunks/1546.55c345c2b79491d9.js",
+      "static/chunks/7642.8058add2c8521f03.js",
+      "static/chunks/345.4ab1ac5eb4d2ffec.js"
+    ]
+  }
+}

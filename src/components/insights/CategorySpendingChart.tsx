@@ -19,7 +19,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export const CategorySpendingChart: React.FC = () => {
-  const { selectedMonthExpenses, settings } = useFinance();
+  const { selectedMonthExpenses, fixedExpenses, settings } = useFinance();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -28,10 +28,15 @@ export const CategorySpendingChart: React.FC = () => {
 
   if (!mounted) return <div className="h-64 bg-slate-100/50 rounded-2xl animate-pulse" />;
 
-  // Aggregate by category
+  // Aggregate by category (combining selected month variable expenses + paid fixed expenses)
   const categoryTotals: Record<string, number> = {};
   selectedMonthExpenses.forEach((exp) => {
     categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + exp.amount;
+  });
+  fixedExpenses.forEach((fe) => {
+    if (fe.status === "paid") {
+      categoryTotals[fe.category] = (categoryTotals[fe.category] || 0) + fe.amount;
+    }
   });
 
   const data = Object.entries(categoryTotals).map(([name, value]) => ({
@@ -48,15 +53,15 @@ export const CategorySpendingChart: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-72">
+    <div className="w-full h-72 min-w-0">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
             data={data}
             cx="50%"
             cy="50%"
-            innerRadius={60}
-            outerRadius={90}
+            innerRadius={55}
+            outerRadius={85}
             paddingAngle={4}
             dataKey="value"
           >
@@ -83,10 +88,11 @@ export const CategorySpendingChart: React.FC = () => {
             verticalAlign="bottom"
             height={36}
             iconType="circle"
-            formatter={(value) => <span className="text-xs font-semibold text-slate-700">{value}</span>}
+            formatter={(value) => <span className="text-[11px] font-semibold text-slate-700">{value}</span>}
           />
         </PieChart>
       </ResponsiveContainer>
     </div>
   );
 };
+

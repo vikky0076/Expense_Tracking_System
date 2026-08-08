@@ -6,6 +6,8 @@ import { auth, db, googleProvider } from "@/lib/firebase";
 import {
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as fbSignOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -52,22 +54,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
   const [isDemo, setIsDemo] = useState<boolean>(false);
 
+  // Check for redirect result from Google Auth on mobile mount
+  useEffect(() => {
+    getRedirectResult(auth).catch((err) => {
+      console.warn("Google Redirect Result warning:", err);
+    });
+  }, []);
+
   // Sync Firebase Auth State
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser: User | null) => {
       if (fbUser) {
         let username = fbUser.displayName || fbUser.email?.split("@")[0] || "user";
         try {
-          // Fetch additional profile data from Firestore if accessible
+          // Fetch existing user profile from Firestore or initialize cleanly
           const userDocRef = doc(db, "users", fbUser.uid);
           const userDocSnap = await getDoc(userDocRef);
 
           if (userDocSnap.exists()) {
             username = userDocSnap.data().username || username;
+          } else {
+            // First time Google / Auth user - create document cleanly with merge
+            await setDoc(
+              userDocRef,
+              {
+                uid: fbUser.uid,
+                email: fbUser.email || "",
+                username,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              },
+              { merge: true }
+            );
           }
         } catch (e) {
-          // Gracefully fall back if Firestore rules in Firebase Console are unconfigured
-          console.warn("Firestore profile fetch warning (using auth metadata):", e);
+          console.warn("Firestore profile fetch/init warning:", e);
         }
 
         setUser({
@@ -92,14 +113,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Sign Up with Username + Email + Password
   const signUpWithEmail = async (username: string, email: string, pass: string) => {
-    // Validate username rules
     const cleanUsername = username.trim().toLowerCase();
     const usernameRegex = /^[a-zA-Z0-9_]{3,30}$/;
     if (!usernameRegex.test(cleanUsername)) {
       throw new Error("Username must be 3-30 characters long and contain only letters, numbers, or underscores.");
     }
 
-    // Try checking username uniqueness in Firestore index
     try {
       const usernameRef = doc(db, "usernames", cleanUsername);
       const usernameSnap = await getDoc(usernameRef);
@@ -108,22 +127,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (e: any) {
       if (e.message?.includes("already taken")) throw e;
-      // Ignore rule permission error during check
     }
 
-    // Create Firebase Auth user
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     await updateProfile(cred.user, { displayName: cleanUsername });
 
-    // Store user document & username index mapping (safe try-catch)
     const now = new Date().toISOString();
     try {
-      await setDoc(doc(db, "users", cred.user.uid), {
-        uid: cred.user.uid,
-        username: cleanUsername,
-        email: cred.user.email,
-        createdAt: now,
-      });
+      await setDoc(
+        doc(db, "users", cred.user.uid),
+        {
+          uid: cred.user.uid,
+          username: cleanUsername,
+          email: cred.user.email,
+          createdAt: now,
+        },
+        { merge: true }
+      );
 
       await setDoc(doc(db, "usernames", cleanUsername), {
         uid: cred.user.uid,
@@ -133,7 +153,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn("Firestore index write warning:", e);
     }
 
-    // Send email verification
     try {
       await sendEmailVerification(cred.user);
     } catch (e) {
@@ -145,7 +164,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithUsernameOrEmail = async (identifier: string, pass: string) => {
     let targetEmail = identifier.trim();
 
-    // If identifier is not an email format, try resolving username to email via Firestore lookup
     if (!targetEmail.includes("@")) {
       const cleanUsername = targetEmail.toLowerCase();
       try {
@@ -194,8 +212,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await sendPasswordResetEmail(auth, email);
   };
 
+  // Enhanced Google Sign-In with mobile redirect fallback
   const signInWithGoogle = async () => {
-    await signInWithPopup(auth, googleProvider);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      typeof navigator !== "undefined" ? navigator.userAgent : ""
+    );
+
+    if (isMobile) {
+      await signInWithRedirect(auth, googleProvider);
+      return;
+    }
+
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (err: any) {
+      console.warn("signInWithPopup failed, attempting signInWithRedirect fallback:", err);
+      if (err.code === "auth/popup-blocked" || err.code === "auth/popup-closed-by-user") {
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        throw err;
+      }
+    }
   };
 
   const loginAsDemo = () => {

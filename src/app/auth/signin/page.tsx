@@ -57,6 +57,25 @@ export default function SignInPage() {
     router.push("/dashboard");
   };
 
+  const handleGoogleClick = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      console.error("Google Auth Error:", err);
+      if (err.code === "auth/popup-closed-by-user") {
+        setError("Google authentication popup was closed before completing sign-in.");
+      } else if (err.code === "auth/popup-blocked") {
+        setError("Google authentication popup was blocked by your browser. Please allow popups or try again.");
+      } else {
+        setError(err.message || "Failed to sign in with Google. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-4xl bg-white rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden grid grid-cols-1 lg:grid-cols-2">
@@ -175,6 +194,7 @@ export default function SignInPage() {
               type="button"
               variant="secondary"
               onClick={handleDemoClick}
+              disabled={loading}
               className="w-full py-2.5 text-xs font-bold shadow-xs"
               icon={<PlayCircle className="w-4 h-4" />}
             >
@@ -184,10 +204,11 @@ export default function SignInPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={signInWithGoogle}
+              onClick={handleGoogleClick}
+              disabled={loading}
               className="w-full py-2.5 text-xs font-bold"
             >
-              Google Authentication
+              {loading ? "Connecting to Google..." : "Google Authentication"}
             </Button>
           </div>
 

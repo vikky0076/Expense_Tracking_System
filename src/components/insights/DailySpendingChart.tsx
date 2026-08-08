@@ -39,7 +39,7 @@ export const DailySpendingChart: React.FC = () => {
   }));
 
   return (
-    <div className="w-full h-72">
+    <div className="w-full h-72 min-w-0">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
