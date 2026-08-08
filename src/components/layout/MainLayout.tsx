@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { FinanceProvider } from "@/context/FinanceContext";
+import { NotificationProvider } from "@/context/NotificationContext";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { Header } from "./Header";
 import { MobileBottomNav } from "./MobileBottomNav";
@@ -88,7 +89,9 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   return (
     <AuthProvider>
       <FinanceProvider>
-        <MainLayoutContent>{children}</MainLayoutContent>
+        <NotificationProvider>
+          <MainLayoutContent>{children}</MainLayoutContent>
+        </NotificationProvider>
       </FinanceProvider>
     </AuthProvider>
   );

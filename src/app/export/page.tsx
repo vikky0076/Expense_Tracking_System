@@ -2,185 +2,151 @@
 
 import React, { useState } from "react";
 import { useFinance } from "@/context/FinanceContext";
-import { useAuth } from "@/context/AuthContext";
-import { exportExpensesToCSV } from "@/lib/csvExporter";
-import { exportExpensesToPDF } from "@/lib/pdfGenerator";
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Select } from "@/components/ui/Select";
-import { FileSpreadsheet, FileText, Download, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { formatCurrency, getMonthLabel } from "@/lib/utils";
+import { exportExpensesToCSV } from "@/lib/csvExporter";
+import { FileSpreadsheet, FileText, Download, CheckCircle2 } from "lucide-react";
 
 export default function ExportPage() {
-  const { user } = useAuth();
   const {
-    expenses,
     selectedMonth,
-    availableMonths,
-    totalContribution,
-    totalExpenses,
+    selectedMonthExpenses,
     fixedExpensesTotal,
     variableExpensesTotal,
+    totalContribution,
+    totalExpenses,
     remainingBalance,
     settings,
   } = useFinance();
 
-  const currency = settings.currency || "₹";
-  const [exportScope, setExportScope] = useState<string>("selected");
-
-  // Determine records based on selected scope
-  const targetExpenses = exportScope === "all"
-    ? expenses
-    : expenses.filter((e) => e.date.startsWith(selectedMonth));
-
-  const scopeLabel = exportScope === "all" ? "All Time Records" : getMonthLabel(selectedMonth);
+  const monthLabel = getMonthLabel(selectedMonth);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
+  const [downloadedStatus, setDownloadedStatus] = useState<string | null>(null);
 
   const handleExportCSV = () => {
-    exportExpensesToCSV(targetExpenses, `Expenses_Export_${scopeLabel.replace(/\s+/g, "_")}.csv`);
+    exportExpensesToCSV(selectedMonthExpenses, monthLabel);
+    setDownloadedStatus("CSV Spreadsheet exported successfully!");
+    setTimeout(() => setDownloadedStatus(null), 3000);
   };
 
-  const handleExportPDF = () => {
-    exportExpensesToPDF({
-      monthLabel: scopeLabel,
-      userName: user?.displayName || "Rahul",
-      totalContribution,
-      totalExpenses,
-      fixedExpenses: fixedExpensesTotal,
-      variableExpenses: variableExpensesTotal,
-      remainingBalance,
-      expenses: targetExpenses,
-      currency,
-    });
+  const handleExportPDF = async () => {
+    setDownloadingPDF(true);
+    try {
+      // Dynamic import jsPDF generator only when requested
+      const { exportExpensesToPDF } = await import("@/lib/pdfGenerator");
+      exportExpensesToPDF({
+        monthLabel,
+        expenses: selectedMonthExpenses,
+        fixedExpenses: fixedExpensesTotal,
+        variableExpenses: variableExpensesTotal,
+        totalContribution,
+        totalExpenses,
+        remainingBalance,
+        currency: settings.currency,
+      });
+      setDownloadedStatus("PDF Statement exported successfully!");
+    } catch (e) {
+      console.error("Failed to generate PDF statement:", e);
+    } finally {
+      setDownloadingPDF(false);
+      setTimeout(() => setDownloadedStatus(null), 3000);
+    }
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-          <FileSpreadsheet className="w-6 h-6 text-emerald-600" />
-          Financial Data Export & Statement Generator
-        </h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Export financial records in spreadsheet (CSV) or formatted document (PDF) format.
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Banner */}
+      <div className="bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-600 p-6 sm:p-8 rounded-3xl text-white shadow-lg shadow-emerald-700/20 space-y-2">
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Export Financial Records</h1>
+        <p className="text-xs sm:text-sm text-emerald-100 max-w-xl">
+          Download formatted PDF statements or raw CSV spreadsheet records for {monthLabel}.
         </p>
       </div>
 
-      {/* Scope Selector Card */}
-      <Card className="space-y-4">
-        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-          1. Select Export Scope & Timeframe
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Select
-            label="Timeframe Scope"
-            options={[
-              { value: "selected", label: `Selected Month (${getMonthLabel(selectedMonth)})` },
-              { value: "all", label: "All Recorded Transactions (All Time)" },
-            ]}
-            value={exportScope}
-            onChange={(e) => setExportScope(e.target.value)}
-          />
-
-          <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-200 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">
-                Selected Records Count
-              </span>
-              <span className="text-lg font-black text-emerald-900">
-                {targetExpenses.length} Expenses
-              </span>
-            </div>
-            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-          </div>
+      {downloadedStatus && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-bold text-emerald-700 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4" />
+          {downloadedStatus}
         </div>
-      </Card>
+      )}
 
-      {/* Summary Preview Box */}
-      <Card className="bg-slate-900 text-white space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">
-            Statement Preview Summary
-          </span>
-          <span className="text-xs font-semibold text-slate-400">{scopeLabel}</span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-          <div>
-            <span className="text-slate-400 block">Total Income/Pool</span>
-            <span className="text-base font-bold text-white">
-              {formatCurrency(totalContribution, currency)}
-            </span>
-          </div>
-          <div>
-            <span className="text-slate-400 block">Total Expenses</span>
-            <span className="text-base font-bold text-orange-400">
-              {formatCurrency(totalExpenses, currency)}
-            </span>
-          </div>
-          <div>
-            <span className="text-slate-400 block">Fixed Recurring</span>
-            <span className="text-base font-bold text-emerald-400">
-              {formatCurrency(fixedExpensesTotal, currency)}
-            </span>
-          </div>
-          <div>
-            <span className="text-slate-400 block">Remaining Balance</span>
-            <span className="text-base font-bold text-emerald-300">
-              {formatCurrency(remainingBalance, currency)}
-            </span>
-          </div>
-        </div>
-      </Card>
-
-      {/* Export Action Buttons */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* CSV Export Button Card */}
-        <Card className="flex flex-col justify-between space-y-4 hover:border-emerald-300">
-          <div className="flex items-start gap-3.5">
-            <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200">
+      {/* Export Options Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* CSV Export Option */}
+        <Card className="space-y-4 flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center">
               <FileSpreadsheet className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-base font-bold text-slate-900">Export CSV Spreadsheet</h4>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Download raw structured CSV data compatible with Microsoft Excel, Google Sheets, or Numbers.
+              <h3 className="text-base font-bold text-slate-900">CSV Spreadsheet Export</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Export all {selectedMonthExpenses.length} transaction records for {monthLabel} into an Excel-compatible CSV spreadsheet file.
               </p>
             </div>
           </div>
+
           <Button
-            variant="primary"
+            variant="outline"
             onClick={handleExportCSV}
-            icon={<Download className="w-4 h-4" />}
-            className="w-full"
+            className="w-full py-3 text-xs font-bold"
+            icon={<Download className="w-4 h-4 text-emerald-600" />}
           >
-            Export CSV File
+            Download CSV Spreadsheet
           </Button>
         </Card>
 
-        {/* PDF Export Button Card */}
-        <Card className="flex flex-col justify-between space-y-4 hover:border-orange-300">
-          <div className="flex items-start gap-3.5">
-            <div className="p-3 rounded-2xl bg-orange-50 text-orange-600 border border-orange-200">
+        {/* PDF Statement Export Option */}
+        <Card className="space-y-4 flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 border border-orange-200 flex items-center justify-center">
               <FileText className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-base font-bold text-slate-900">Export Formatted PDF Statement</h4>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Generate a clean, printable PDF financial report complete with header, summary cards, and itemized transaction tables.
+              <h3 className="text-base font-bold text-slate-900">Formatted PDF Financial Statement</h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Generate a clean, print-ready PDF statement with 5-member contributions, fixed bills, itemized expenses, and net balances.
               </p>
             </div>
           </div>
+
           <Button
-            variant="secondary"
+            variant="primary"
             onClick={handleExportPDF}
+            disabled={downloadingPDF}
+            className="w-full py-3 text-xs font-bold"
             icon={<Download className="w-4 h-4" />}
-            className="w-full"
           >
-            Export PDF Report
+            {downloadingPDF ? "Generating PDF..." : "Download PDF Statement"}
           </Button>
         </Card>
       </div>
+
+      {/* Monthly Summary Preview Table */}
+      <Card className="space-y-4">
+        <h3 className="text-base font-bold text-slate-900">Statement Preview — {monthLabel}</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span className="text-[10px] font-bold uppercase text-slate-400">Total Group Pool</span>
+            <span className="text-base font-black text-slate-900 block mt-0.5">
+              {formatCurrency(totalContribution, settings.currency)}
+            </span>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span className="text-[10px] font-bold uppercase text-slate-400">Total Month Spend</span>
+            <span className="text-base font-black text-slate-900 block mt-0.5">
+              {formatCurrency(totalExpenses, settings.currency)}
+            </span>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span className="text-[10px] font-bold uppercase text-slate-400">Net Reserve Balance</span>
+            <span className="text-base font-black text-emerald-600 block mt-0.5">
+              {formatCurrency(remainingBalance, settings.currency)}
+            </span>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
   Expense,
   FixedExpense,
@@ -19,6 +19,8 @@ import {
 } from "@/lib/mockData";
 import { getMonthKey, getMonthLabel, generateId } from "@/lib/utils";
 import { useAuth } from "./AuthContext";
+import { db } from "@/lib/firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 interface FinanceContextType {
   // State
@@ -81,7 +83,7 @@ const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isDemo } = useAuth();
-  const currentMonthKey = getMonthKey();
+  const currentMonthKey = useMemo(() => getMonthKey(), []);
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthKey);
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -91,19 +93,21 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
   const [settings, setSettings] = useState<UserSettings>({ currency: "₹", monthlyBudget: 0, customCategories: [] });
 
-  // Key prefix scoped to user ID or demo state
   const storagePrefix = user ? `fintrack_${user.uid}_` : "fintrack_guest_";
+  const isLoadedRef = useRef<boolean>(false);
 
-  // Initialize data per user account (NO DEMO DATA for real users!)
+  // Initialize data per user account (Firebase Cloud Sync + LocalStorage fallback)
   useEffect(() => {
+    isLoadedRef.current = false;
+
     if (isDemo) {
-      // If explicit Demo Mode is active, populate rich demo dataset
       setExpenses(INITIAL_EXPENSES as any);
       setFixedExpenses(INITIAL_FIXED_EXPENSES as any);
       setMembers(INITIAL_MEMBERS as any);
       setTasks(INITIAL_TASKS as any);
       setGoals(INITIAL_GOALS as any);
       setSettings(INITIAL_SETTINGS);
+      isLoadedRef.current = true;
       return;
     }
 
@@ -114,135 +118,255 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setTasks([]);
       setGoals([]);
       setSettings({ currency: "₹", monthlyBudget: 0, customCategories: [] });
+      isLoadedRef.current = true;
       return;
     }
 
-    // Real user state - load user-scoped records or default to clean EMPTY arrays (₹0)
-    try {
-      const storedExp = localStorage.getItem(`${storagePrefix}expenses`);
-      const storedFixed = localStorage.getItem(`${storagePrefix}fixed_expenses`);
-      const storedMembers = localStorage.getItem(`${storagePrefix}members`);
-      const storedTasks = localStorage.getItem(`${storagePrefix}tasks`);
-      const storedGoals = localStorage.getItem(`${storagePrefix}goals`);
-      const storedSettings = localStorage.getItem(`${storagePrefix}settings`);
+    let isMounted = true;
 
-      setExpenses(storedExp ? JSON.parse(storedExp) : []);
-      setFixedExpenses(storedFixed ? JSON.parse(storedFixed) : []);
-      setMembers(storedMembers ? JSON.parse(storedMembers) : []);
-      setTasks(storedTasks ? JSON.parse(storedTasks) : []);
-      setGoals(storedGoals ? JSON.parse(storedGoals) : []);
-      setSettings(storedSettings ? JSON.parse(storedSettings) : { currency: "₹", monthlyBudget: 0, customCategories: [] });
-    } catch (e) {
-      console.error("Failed to parse user local data:", e);
-      setExpenses([]);
-      setFixedExpenses([]);
-      setMembers([]);
-      setTasks([]);
-      setGoals([]);
-      setSettings({ currency: "₹", monthlyBudget: 0, customCategories: [] });
-    }
+    const loadData = async () => {
+      // 1. Instant local cache load
+      let localExp: Expense[] = [];
+      let localFixed: FixedExpense[] = [];
+      let localMem: Member[] = [];
+      let localTask: PlannerTask[] = [];
+      let localGoal: FinancialGoal[] = [];
+      let localSet: UserSettings = { currency: "₹", monthlyBudget: 0, customCategories: [] };
+
+      try {
+        const storedExp = localStorage.getItem(`${storagePrefix}expenses`);
+        const storedFixed = localStorage.getItem(`${storagePrefix}fixed_expenses`);
+        const storedMembers = localStorage.getItem(`${storagePrefix}members`);
+        const storedTasks = localStorage.getItem(`${storagePrefix}tasks`);
+        const storedGoals = localStorage.getItem(`${storagePrefix}goals`);
+        const storedSettings = localStorage.getItem(`${storagePrefix}settings`);
+
+        if (storedExp) localExp = JSON.parse(storedExp);
+        if (storedFixed) localFixed = JSON.parse(storedFixed);
+        if (storedMembers) localMem = JSON.parse(storedMembers);
+        if (storedTasks) localTask = JSON.parse(storedTasks);
+        if (storedGoals) localGoal = JSON.parse(storedGoals);
+        if (storedSettings) localSet = JSON.parse(storedSettings);
+
+        if (isMounted) {
+          setExpenses(localExp);
+          setFixedExpenses(localFixed);
+          setMembers(localMem);
+          setTasks(localTask);
+          setGoals(localGoal);
+          setSettings(localSet);
+        }
+      } catch (e) {
+        console.warn("Local storage parse error:", e);
+      }
+
+      // 2. Fetch ground truth from Cloud Firestore across devices
+      try {
+        const userDocRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(userDocRef);
+
+        if (docSnap.exists() && isMounted) {
+          const data = docSnap.data();
+          if (Array.isArray(data.expenses)) {
+            setExpenses(data.expenses);
+            localStorage.setItem(`${storagePrefix}expenses`, JSON.stringify(data.expenses));
+          }
+          if (Array.isArray(data.fixedExpenses)) {
+            setFixedExpenses(data.fixedExpenses);
+            localStorage.setItem(`${storagePrefix}fixed_expenses`, JSON.stringify(data.fixedExpenses));
+          }
+          if (Array.isArray(data.members)) {
+            setMembers(data.members);
+            localStorage.setItem(`${storagePrefix}members`, JSON.stringify(data.members));
+          }
+          if (Array.isArray(data.tasks)) {
+            setTasks(data.tasks);
+            localStorage.setItem(`${storagePrefix}tasks`, JSON.stringify(data.tasks));
+          }
+          if (Array.isArray(data.goals)) {
+            setGoals(data.goals);
+            localStorage.setItem(`${storagePrefix}goals`, JSON.stringify(data.goals));
+          }
+          if (data.settings && typeof data.settings === "object") {
+            setSettings(data.settings);
+            localStorage.setItem(`${storagePrefix}settings`, JSON.stringify(data.settings));
+          }
+        } else if (!docSnap.exists() && isMounted) {
+          // Push initial local data to Cloud Firestore for new cloud account
+          await setDoc(userDocRef, {
+            expenses: localExp,
+            fixedExpenses: localFixed,
+            members: localMem,
+            tasks: localTask,
+            goals: localGoal,
+            settings: localSet,
+            updatedAt: new Date().toISOString(),
+          }, { merge: true });
+        }
+      } catch (err) {
+        console.warn("Firestore cloud fetch warning (using local cache):", err);
+      } finally {
+        if (isMounted) {
+          isLoadedRef.current = true;
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [user, isDemo, storagePrefix]);
 
-  // Persist changes to LocalStorage scoped by user ID
+  // Helper to persist state to LocalStorage and Cloud Firestore
+  const syncToCloudAndLocal = useCallback(
+    async (
+      updatedExp: Expense[],
+      updatedFixed: FixedExpense[],
+      updatedMem: Member[],
+      updatedTask: PlannerTask[],
+      updatedGoal: FinancialGoal[],
+      updatedSet: UserSettings
+    ) => {
+      if (!user || isDemo) return;
+
+      // 1. LocalStorage
+      try {
+        localStorage.setItem(`${storagePrefix}expenses`, JSON.stringify(updatedExp));
+        localStorage.setItem(`${storagePrefix}fixed_expenses`, JSON.stringify(updatedFixed));
+        localStorage.setItem(`${storagePrefix}members`, JSON.stringify(updatedMem));
+        localStorage.setItem(`${storagePrefix}tasks`, JSON.stringify(updatedTask));
+        localStorage.setItem(`${storagePrefix}goals`, JSON.stringify(updatedGoal));
+        localStorage.setItem(`${storagePrefix}settings`, JSON.stringify(updatedSet));
+      } catch (e) {
+        console.warn("LocalStorage write warning:", e);
+      }
+
+      // 2. Cloud Firestore across devices
+      if (isLoadedRef.current) {
+        try {
+          const userDocRef = doc(db, "users", user.uid);
+          await setDoc(
+            userDocRef,
+            {
+              expenses: updatedExp,
+              fixedExpenses: updatedFixed,
+              members: updatedMem,
+              tasks: updatedTask,
+              goals: updatedGoal,
+              settings: updatedSet,
+              updatedAt: new Date().toISOString(),
+            },
+            { merge: true }
+          );
+        } catch (e) {
+          console.warn("Firestore cloud sync write error:", e);
+        }
+      }
+    },
+    [user, isDemo, storagePrefix]
+  );
+
+  // Sync to Cloud & Local when state changes after initial load
   useEffect(() => {
-    if (user && !isDemo) {
-      localStorage.setItem(`${storagePrefix}expenses`, JSON.stringify(expenses));
+    if (isLoadedRef.current && user && !isDemo) {
+      syncToCloudAndLocal(expenses, fixedExpenses, members, tasks, goals, settings);
     }
-  }, [expenses, user, isDemo, storagePrefix]);
+  }, [expenses, fixedExpenses, members, tasks, goals, settings, user, isDemo, syncToCloudAndLocal]);
 
-  useEffect(() => {
-    if (user && !isDemo) {
-      localStorage.setItem(`${storagePrefix}fixed_expenses`, JSON.stringify(fixedExpenses));
-    }
-  }, [fixedExpenses, user, isDemo, storagePrefix]);
+  // Filter transactions for Selected Month
+  const selectedMonthExpenses = useMemo(() => {
+    return expenses.filter((exp) => exp.date && exp.date.startsWith(selectedMonth));
+  }, [expenses, selectedMonth]);
 
-  useEffect(() => {
-    if (user && !isDemo) {
-      localStorage.setItem(`${storagePrefix}members`, JSON.stringify(members));
-    }
-  }, [members, user, isDemo, storagePrefix]);
+  // Total Member Contributions for Month
+  const totalContribution = useMemo(() => {
+    return members.reduce((sum, m) => sum + (m.contributionAmount || 0), 0);
+  }, [members]);
 
-  useEffect(() => {
-    if (user && !isDemo) {
-      localStorage.setItem(`${storagePrefix}tasks`, JSON.stringify(tasks));
-    }
-  }, [tasks, user, isDemo, storagePrefix]);
+  // Calculate Fixed Expenses for the Selected Month
+  const fixedExpensesTotal = useMemo(() => {
+    return fixedExpenses.reduce((sum, fe) => sum + (fe.amount || 0), 0);
+  }, [fixedExpenses]);
 
-  useEffect(() => {
-    if (user && !isDemo) {
-      localStorage.setItem(`${storagePrefix}goals`, JSON.stringify(goals));
-    }
-  }, [goals, user, isDemo, storagePrefix]);
+  // Calculate Variable/Normal Expenses (Deduplicating manual fixed tags to prevent double counting)
+  const variableExpensesTotal = useMemo(() => {
+    return selectedMonthExpenses.reduce((sum, exp) => {
+      if (exp.isFixed) return sum; // Skip if manually tagged as fixed to prevent double counting
+      return sum + (exp.amount || 0);
+    }, 0);
+  }, [selectedMonthExpenses]);
 
-  useEffect(() => {
-    if (user && !isDemo) {
-      localStorage.setItem(`${storagePrefix}settings`, JSON.stringify(settings));
-    }
-  }, [settings, user, isDemo, storagePrefix]);
+  // SINGLE SOURCE OF TRUTH: Total Monthly Expenses = Fixed Bills + Variable Transactions
+  const totalExpenses = useMemo(() => {
+    return fixedExpensesTotal + variableExpensesTotal;
+  }, [fixedExpensesTotal, variableExpensesTotal]);
 
-  // Derived Expenses for Selected Month
-  const selectedMonthExpenses = expenses.filter((exp) => exp.date.startsWith(selectedMonth));
+  // Remaining Balance = Total Member Pool - Total Expenses
+  const remainingBalance = useMemo(() => {
+    return totalContribution - totalExpenses;
+  }, [totalContribution, totalExpenses]);
 
-  // Calculate Total Member Contributions
-  const totalContribution = members.reduce((sum, m) => sum + (m.contributionAmount || 0), 0);
+  // Savings Target Reserve
+  const savings = useMemo(() => {
+    return Math.max(0, remainingBalance);
+  }, [remainingBalance]);
 
-  // Calculate Total Expenses for Month
-  const totalExpenses = selectedMonthExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
-
-  // Fixed vs Variable
-  const fixedExpensesTotal = fixedExpenses.reduce((sum, fe) => sum + (fe.amount || 0), 0);
-  const variableExpensesTotal = Math.max(0, totalExpenses - fixedExpensesTotal);
-
-  // Remaining Balance & Savings
-  const remainingBalance = totalContribution - totalExpenses;
-  const savings = Math.max(0, remainingBalance);
-
-  // Budget Progress
+  // Budget Progress Percentage
   const budgetLimit = settings.monthlyBudget || totalContribution || 1;
-  const budgetProgress = budgetLimit > 0 ? Math.min(150, Math.round((totalExpenses / budgetLimit) * 100)) : 0;
+  const budgetProgress = useMemo(() => {
+    if (budgetLimit <= 0) return 0;
+    return Math.min(150, Math.round((totalExpenses / budgetLimit) * 100));
+  }, [totalExpenses, budgetLimit]);
 
-  // Compute Available Months dynamically
-  const monthKeysSet = new Set<string>();
-  monthKeysSet.add(currentMonthKey);
-  expenses.forEach((e) => {
-    if (e.date && e.date.length >= 7) {
-      monthKeysSet.add(e.date.substring(0, 7));
-    }
-  });
+  // Dynamically compute available month selector choices
+  const availableMonths = useMemo(() => {
+    const monthKeysSet = new Set<string>();
+    monthKeysSet.add(currentMonthKey);
+    expenses.forEach((e) => {
+      if (e.date && e.date.length >= 7) {
+        monthKeysSet.add(e.date.substring(0, 7));
+      }
+    });
 
-  const availableMonths = Array.from(monthKeysSet)
-    .sort()
-    .reverse()
-    .map((key) => ({
-      key,
-      label: getMonthLabel(key),
-    }));
+    return Array.from(monthKeysSet)
+      .sort()
+      .reverse()
+      .map((key) => ({
+        key,
+        label: getMonthLabel(key),
+      }));
+  }, [expenses, currentMonthKey]);
 
-  // Previous Month Comparison
-  const [yearStr, monthStr] = selectedMonth.split("-");
-  const currentDate = new Date(parseInt(yearStr, 10), parseInt(monthStr, 10) - 1, 1);
-  const prevDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-  const prevMonthKey = getMonthKey(prevDate);
-  const prevMonthLabel = getMonthLabel(prevMonthKey);
+  // Month-over-Month comparison statistics
+  const previousMonthStats = useMemo(() => {
+    const [yearStr, monthStr] = selectedMonth.split("-");
+    const currentDate = new Date(parseInt(yearStr, 10), parseInt(monthStr, 10) - 1, 1);
+    const prevDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const prevMonthKey = getMonthKey(prevDate);
+    const prevMonthLabel = getMonthLabel(prevMonthKey);
 
-  const prevMonthExpenses = expenses.filter((exp) => exp.date.startsWith(prevMonthKey));
-  const prevTotalExpenses = prevMonthExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+    const prevMonthExpenses = expenses.filter((exp) => exp.date && exp.date.startsWith(prevMonthKey));
+    const prevVariableTotal = prevMonthExpenses.reduce((sum, exp) => (exp.isFixed ? sum : sum + (exp.amount || 0)), 0);
+    const prevTotalExpenses = fixedExpensesTotal + prevVariableTotal;
 
-  const diffAmount = Math.abs(totalExpenses - prevTotalExpenses);
-  const diffPercent = prevTotalExpenses > 0 ? Math.round((diffAmount / prevTotalExpenses) * 100) : 0;
-  const isLower = totalExpenses <= prevTotalExpenses;
+    const diffAmount = Math.abs(totalExpenses - prevTotalExpenses);
+    const diffPercent = prevTotalExpenses > 0 ? Math.round((diffAmount / prevTotalExpenses) * 100) : 0;
+    const isLower = totalExpenses <= prevTotalExpenses;
 
-  const previousMonthStats = {
-    monthKey: prevMonthKey,
-    monthLabel: prevMonthLabel,
-    totalExpenses: prevTotalExpenses,
-    diffAmount,
-    diffPercent,
-    isLower,
-  };
+    return {
+      monthKey: prevMonthKey,
+      monthLabel: prevMonthLabel,
+      totalExpenses: prevTotalExpenses,
+      diffAmount,
+      diffPercent,
+      isLower,
+    };
+  }, [selectedMonth, expenses, fixedExpensesTotal, totalExpenses]);
 
-  // Actions
-  const addExpense = (newExpData: Omit<Expense, "id" | "userId" | "createdAt" | "updatedAt">) => {
+  // Actions (Memoized using useCallback to prevent child re-renders)
+  const addExpense = useCallback((newExpData: Omit<Expense, "id" | "userId" | "createdAt" | "updatedAt">) => {
     const now = new Date().toISOString();
     const newExp: Expense = {
       ...newExpData,
@@ -252,9 +376,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       updatedAt: now,
     };
     setExpenses((prev) => [newExp, ...prev]);
-  };
+  }, [user]);
 
-  const updateExpense = (id: string, updatedData: Partial<Expense>) => {
+  const updateExpense = useCallback((id: string, updatedData: Partial<Expense>) => {
     setExpenses((prev) =>
       prev.map((item) =>
         item.id === id
@@ -262,13 +386,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           : item
       )
     );
-  };
+  }, []);
 
-  const deleteExpense = (id: string) => {
+  const deleteExpense = useCallback((id: string) => {
     setExpenses((prev) => prev.filter((item) => item.id !== id));
-  };
+  }, []);
 
-  const addFixedExpense = (newFixedData: Omit<FixedExpense, "id" | "userId" | "createdAt" | "updatedAt">) => {
+  const addFixedExpense = useCallback((newFixedData: Omit<FixedExpense, "id" | "userId" | "createdAt" | "updatedAt">) => {
     const now = new Date().toISOString();
     const newFixed: FixedExpense = {
       ...newFixedData,
@@ -278,9 +402,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       updatedAt: now,
     };
     setFixedExpenses((prev) => [newFixed, ...prev]);
-  };
+  }, [user]);
 
-  const updateFixedExpense = (id: string, updatedData: Partial<FixedExpense>) => {
+  const updateFixedExpense = useCallback((id: string, updatedData: Partial<FixedExpense>) => {
     setFixedExpenses((prev) =>
       prev.map((item) =>
         item.id === id
@@ -288,13 +412,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           : item
       )
     );
-  };
+  }, []);
 
-  const deleteFixedExpense = (id: string) => {
+  const deleteFixedExpense = useCallback((id: string) => {
     setFixedExpenses((prev) => prev.filter((item) => item.id !== id));
-  };
+  }, []);
 
-  const addMember = (newMemData: Omit<Member, "id" | "userId" | "createdAt">) => {
+  const addMember = useCallback((newMemData: Omit<Member, "id" | "userId" | "createdAt">) => {
     const newMember: Member = {
       ...newMemData,
       id: generateId(),
@@ -302,25 +426,25 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       createdAt: new Date().toISOString(),
     };
     setMembers((prev) => [...prev, newMember]);
-  };
+  }, [user]);
 
-  const updateMember = (id: string, updatedData: Partial<Member>) => {
+  const updateMember = useCallback((id: string, updatedData: Partial<Member>) => {
     setMembers((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...updatedData } : item))
     );
-  };
+  }, []);
 
-  const deleteMember = (id: string) => {
+  const deleteMember = useCallback((id: string) => {
     setMembers((prev) => prev.filter((item) => item.id !== id));
-  };
+  }, []);
 
-  const toggleMemberPaid = (id: string) => {
+  const toggleMemberPaid = useCallback((id: string) => {
     setMembers((prev) =>
       prev.map((item) => (item.id === id ? { ...item, isPaid: !item.isPaid } : item))
     );
-  };
+  }, []);
 
-  const addTask = (taskData: Omit<PlannerTask, "id" | "userId" | "createdAt">) => {
+  const addTask = useCallback((taskData: Omit<PlannerTask, "id" | "userId" | "createdAt">) => {
     const newTask: PlannerTask = {
       ...taskData,
       id: generateId(),
@@ -328,25 +452,25 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       createdAt: new Date().toISOString(),
     };
     setTasks((prev) => [newTask, ...prev]);
-  };
+  }, [user]);
 
-  const updateTask = (id: string, updatedData: Partial<PlannerTask>) => {
+  const updateTask = useCallback((id: string, updatedData: Partial<PlannerTask>) => {
     setTasks((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...updatedData } : item))
     );
-  };
+  }, []);
 
-  const toggleTaskCompleted = (id: string) => {
+  const toggleTaskCompleted = useCallback((id: string) => {
     setTasks((prev) =>
       prev.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item))
     );
-  };
+  }, []);
 
-  const deleteTask = (id: string) => {
+  const deleteTask = useCallback((id: string) => {
     setTasks((prev) => prev.filter((item) => item.id !== id));
-  };
+  }, []);
 
-  const addGoal = (goalData: Omit<FinancialGoal, "id" | "userId" | "createdAt">) => {
+  const addGoal = useCallback((goalData: Omit<FinancialGoal, "id" | "userId" | "createdAt">) => {
     const newGoal: FinancialGoal = {
       ...goalData,
       id: generateId(),
@@ -354,23 +478,23 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       createdAt: new Date().toISOString(),
     };
     setGoals((prev) => [...prev, newGoal]);
-  };
+  }, [user]);
 
-  const updateGoal = (id: string, updatedData: Partial<FinancialGoal>) => {
+  const updateGoal = useCallback((id: string, updatedData: Partial<FinancialGoal>) => {
     setGoals((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...updatedData } : item))
     );
-  };
+  }, []);
 
-  const deleteGoal = (id: string) => {
+  const deleteGoal = useCallback((id: string) => {
     setGoals((prev) => prev.filter((item) => item.id !== id));
-  };
+  }, []);
 
-  const updateSettings = (newSettings: Partial<UserSettings>) => {
+  const updateSettings = useCallback((newSettings: Partial<UserSettings>) => {
     setSettings((prev) => ({ ...prev, ...newSettings }));
-  };
+  }, []);
 
-  const resetAllData = () => {
+  const resetAllData = useCallback(() => {
     setExpenses([]);
     setFixedExpenses([]);
     setMembers([]);
@@ -385,7 +509,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       localStorage.removeItem(`${storagePrefix}goals`);
       localStorage.removeItem(`${storagePrefix}settings`);
     }
-  };
+  }, [user, isDemo, storagePrefix]);
 
   return (
     <FinanceContext.Provider

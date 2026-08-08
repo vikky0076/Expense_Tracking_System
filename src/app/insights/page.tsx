@@ -1,110 +1,121 @@
 "use client";
 
 import React from "react";
+import dynamic from "next/dynamic";
 import { useFinance } from "@/context/FinanceContext";
-import { MonthlySpendingChart } from "@/components/insights/MonthlySpendingChart";
-import { CategorySpendingChart } from "@/components/insights/CategorySpendingChart";
-import { DailySpendingChart } from "@/components/insights/DailySpendingChart";
-import { FixedVsVariableChart } from "@/components/insights/FixedVsVariableChart";
-import { SmartInsightsCards } from "@/components/insights/SmartInsightsCards";
 import { Card } from "@/components/ui/Card";
-import { PieChart, BarChart3, TrendingUp, Sparkles, Scale } from "lucide-react";
-import { getMonthLabel } from "@/lib/utils";
+import { formatCurrency, getMonthLabel } from "@/lib/utils";
+import { PieChart, TrendingUp, Sparkles, Scale, Activity } from "lucide-react";
+import { SmartInsightsCards } from "@/components/insights/SmartInsightsCards";
+
+// Dynamically load heavy Recharts chart components (SSR disabled for instant page render)
+const MonthlySpendingChart = dynamic(
+  () => import("@/components/insights/MonthlySpendingChart").then((m) => m.MonthlySpendingChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-64 bg-slate-100/70 animate-pulse rounded-2xl flex items-center justify-center text-xs text-slate-400">Loading Chart...</div>,
+  }
+);
+
+const CategorySpendingChart = dynamic(
+  () => import("@/components/insights/CategorySpendingChart").then((m) => m.CategorySpendingChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-64 bg-slate-100/70 animate-pulse rounded-2xl flex items-center justify-center text-xs text-slate-400">Loading Chart...</div>,
+  }
+);
+
+const DailySpendingChart = dynamic(
+  () => import("@/components/insights/DailySpendingChart").then((m) => m.DailySpendingChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-64 bg-slate-100/70 animate-pulse rounded-2xl flex items-center justify-center text-xs text-slate-400">Loading Chart...</div>,
+  }
+);
+
+const FixedVsVariableChart = dynamic(
+  () => import("@/components/insights/FixedVsVariableChart").then((m) => m.FixedVsVariableChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-64 bg-slate-100/70 animate-pulse rounded-2xl flex items-center justify-center text-xs text-slate-400">Loading Chart...</div>,
+  }
+);
 
 export default function InsightsPage() {
-  const { selectedMonth } = useFinance();
+  const {
+    selectedMonth,
+    totalExpenses,
+    fixedExpensesTotal,
+    variableExpensesTotal,
+    settings,
+  } = useFinance();
+
+  const monthLabel = getMonthLabel(selectedMonth);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-          <PieChart className="w-6 h-6 text-emerald-600" />
-          Financial Analytics & Smart Insights
-        </h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Visual spending breakdowns and automated commentary for {getMonthLabel(selectedMonth)}
-        </p>
-      </div>
-
-      {/* Smart Automated Textual Insights */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
-          <Sparkles className="w-4 h-4 text-orange-500" />
-          <span>Automated Financial Summary</span>
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-600 p-6 rounded-3xl text-white shadow-lg shadow-emerald-700/20">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 px-3 py-1 rounded-full text-xs font-bold text-emerald-100">
+            <Sparkles className="w-3.5 h-3.5 text-orange-300" />
+            <span>Automated Financial Analytics</span>
+          </div>
+          <h1 className="text-2xl font-black tracking-tight">Spending Insights & Trends</h1>
+          <p className="text-xs text-emerald-100">
+            Visual breakdown of fixed vs variable expenses for {monthLabel}.
+          </p>
         </div>
-        <SmartInsightsCards />
+
+        <div className="bg-white/15 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/20 space-y-0.5">
+          <span className="text-[10px] font-bold uppercase text-emerald-200 tracking-wider">
+            Total Month Spend
+          </span>
+          <p className="text-xl font-black text-white">
+            {formatCurrency(totalExpenses, settings.currency)}
+          </p>
+        </div>
       </div>
 
-      {/* Charts Grid */}
+      {/* Automated Commentary */}
+      <SmartInsightsCards />
+
+      {/* Metrics Summary Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card className="flex items-center gap-4">
+          <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200">
+            <Scale className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-slate-500">Fixed Recurring Bills</span>
+            <p className="text-lg font-black text-slate-900">
+              {formatCurrency(fixedExpensesTotal, settings.currency)}
+            </p>
+          </div>
+        </Card>
+
+        <Card className="flex items-center gap-4">
+          <div className="p-3 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200">
+            <Activity className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-slate-500">Variable Daily Expenses</span>
+            <p className="text-lg font-black text-slate-900">
+              {formatCurrency(variableExpensesTotal, settings.currency)}
+            </p>
+          </div>
+        </Card>
+      </div>
+
+      {/* Interactive Recharts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 1. Monthly Spending Trend Bar Chart */}
-        <Card className="space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-emerald-600" />
-                Monthly Spending Trend
-              </h3>
-              <p className="text-[10px] text-slate-400">Total expenses per month</p>
-            </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Bar Chart
-            </span>
-          </div>
-          <MonthlySpendingChart />
-        </Card>
+        <CategorySpendingChart />
+        <FixedVsVariableChart />
+      </div>
 
-        {/* 2. Category Spending Donut Chart */}
-        <Card className="space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <PieChart className="w-4 h-4 text-amber-500" />
-                Category Spending Breakdown
-              </h3>
-              <p className="text-[10px] text-slate-400">Category allocation for {getMonthLabel(selectedMonth)}</p>
-            </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-              Donut Chart
-            </span>
-          </div>
-          <CategorySpendingChart />
-        </Card>
-
-        {/* 3. Daily Spending Velocity Line Chart */}
-        <Card className="space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-orange-500" />
-                Daily Spending Progression
-              </h3>
-              <p className="text-[10px] text-slate-400">Day-by-day expenditure throughout the month</p>
-            </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200">
-              Line Chart
-            </span>
-          </div>
-          <DailySpendingChart />
-        </Card>
-
-        {/* 4. Fixed vs Variable Donut Chart */}
-        <Card className="space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Scale className="w-4 h-4 text-indigo-600" />
-                Fixed vs Variable Expenses
-              </h3>
-              <p className="text-[10px] text-slate-400">Recurring fixed bills vs flexible variable spending</p>
-            </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-              Ratio Chart
-            </span>
-          </div>
-          <FixedVsVariableChart />
-        </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <MonthlySpendingChart />
+        <DailySpendingChart />
       </div>
     </div>
   );

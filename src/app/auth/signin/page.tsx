@@ -1,22 +1,29 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { TrendingUp, Eye, EyeOff, Sparkles, Lock, Mail, ArrowRight, ShieldCheck } from "lucide-react";
+import { TrendingUp, Eye, EyeOff, Sparkles, Lock, Mail, ArrowRight, ShieldCheck, PlayCircle } from "lucide-react";
 
 export default function SignInPage() {
   const router = useRouter();
-  const { signInWithUsernameOrEmail, signInWithGoogle } = useAuth();
+  const { user, isDemo, loginAsDemo, signInWithUsernameOrEmail, signInWithGoogle } = useAuth();
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Automatically redirect if user or demo mode becomes active
+  useEffect(() => {
+    if (user || isDemo) {
+      router.push("/dashboard");
+    }
+  }, [user, isDemo, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +40,8 @@ export default function SignInPage() {
       router.push("/dashboard");
     } catch (err: any) {
       console.error("Sign In Error:", err);
-      if (err.code === "auth/invalid-credential" || err.message?.includes("Invalid username")) {
-        setError("The username/email or password is incorrect. Please try again.");
+      if (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.message?.includes("Invalid username")) {
+        setError("Account not found or password incorrect. If you haven't created an account, click 'Create Account' below.");
       } else if (err.code === "auth/too-many-requests") {
         setError("Too many failed attempts. Please wait a few minutes before trying again.");
       } else {
@@ -43,6 +50,11 @@ export default function SignInPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDemoClick = () => {
+    loginAsDemo();
+    router.push("/dashboard");
   };
 
   return (
@@ -107,6 +119,7 @@ export default function SignInPage() {
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
+              autoComplete="username"
               required
             />
 
@@ -118,6 +131,7 @@ export default function SignInPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
+                autoComplete="current-password"
                 required
               />
               <button
@@ -151,19 +165,31 @@ export default function SignInPage() {
             </Button>
           </form>
 
-          <div className="relative my-6 text-center">
+          <div className="relative my-5 text-center">
             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
-            <span className="relative bg-white px-3 text-[10px] uppercase tracking-wider font-bold text-slate-400">Or continue with</span>
+            <span className="relative bg-white px-3 text-[10px] uppercase tracking-wider font-bold text-slate-400">Or options</span>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={signInWithGoogle}
-            className="w-full py-2.5 text-xs font-bold"
-          >
-            Google Authentication
-          </Button>
+          <div className="space-y-2.5">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleDemoClick}
+              className="w-full py-2.5 text-xs font-bold shadow-xs"
+              icon={<PlayCircle className="w-4 h-4" />}
+            >
+              Explore Interactive Demo (1-Click Login)
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={signInWithGoogle}
+              className="w-full py-2.5 text-xs font-bold"
+            >
+              Google Authentication
+            </Button>
+          </div>
 
           <p className="text-center text-xs text-slate-500 mt-6">
             Don't have an account yet?{" "}

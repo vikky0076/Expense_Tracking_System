@@ -1,8 +1,6 @@
 {
-  "/auth/verify/page": "app/auth/verify/page.js",
-  "/welcome/page": "app/welcome/page.js",
-  "/profile/page": "app/profile/page.js",
-  "/income/page": "app/income/page.js",
-  "/fixed-expenses/page": "app/fixed-expenses/page.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/page": "app/page.js",
+  "/auth/signup/page": "app/auth/signup/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/auth/signin/page": "app/auth/signin/page.js"
 }

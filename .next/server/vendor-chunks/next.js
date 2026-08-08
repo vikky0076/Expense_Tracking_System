@@ -10,6 +10,16 @@ exports.id = "vendor-chunks/next";
 exports.ids = ["vendor-chunks/next"];
 exports.modules = {
 
+/***/ "(rsc)/./node_modules/next/font/google/target.css?{\"path\":\"src\\\\app\\\\layout.tsx\",\"import\":\"Plus_Jakarta_Sans\",\"arguments\":[{\"subsets\":[\"latin\"],\"weight\":[\"400\",\"500\",\"600\",\"700\",\"800\"],\"display\":\"swap\",\"variable\":\"--font-plus-jakarta\"}],\"variableName\":\"plusJakartaSans\"}":
+/*!*******************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/next/font/google/target.css?{"path":"src\\app\\layout.tsx","import":"Plus_Jakarta_Sans","arguments":[{"subsets":["latin"],"weight":["400","500","600","700","800"],"display":"swap","variable":"--font-plus-jakarta"}],"variableName":"plusJakartaSans"} ***!
+  \*******************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((module) => {
+
+eval("// Exports\nmodule.exports = {\n\t\"style\": {\"fontFamily\":\"'__Plus_Jakarta_Sans_a11773', '__Plus_Jakarta_Sans_Fallback_a11773'\",\"fontStyle\":\"normal\"},\n\t\"className\": \"__className_a11773\",\n\t\"variable\": \"__variable_a11773\"\n};\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKHJzYykvLi9ub2RlX21vZHVsZXMvbmV4dC9mb250L2dvb2dsZS90YXJnZXQuY3NzP3tcInBhdGhcIjpcInNyY1xcXFxhcHBcXFxcbGF5b3V0LnRzeFwiLFwiaW1wb3J0XCI6XCJQbHVzX0pha2FydGFfU2Fuc1wiLFwiYXJndW1lbnRzXCI6W3tcInN1YnNldHNcIjpbXCJsYXRpblwiXSxcIndlaWdodFwiOltcIjQwMFwiLFwiNTAwXCIsXCI2MDBcIixcIjcwMFwiLFwiODAwXCJdLFwiZGlzcGxheVwiOlwic3dhcFwiLFwidmFyaWFibGVcIjpcIi0tZm9udC1wbHVzLWpha2FydGFcIn1dLFwidmFyaWFibGVOYW1lXCI6XCJwbHVzSmFrYXJ0YVNhbnNcIn0iLCJtYXBwaW5ncyI6IkFBQUE7QUFDQTtBQUNBLFdBQVcsd0dBQXdHO0FBQ25IO0FBQ0E7QUFDQSIsInNvdXJjZXMiOlsid2VicGFjazovL2V4cGVuc2UtdHJhY2tpbmctc3lzdGVtLy4vbm9kZV9tb2R1bGVzL25leHQvZm9udC9nb29nbGUvdGFyZ2V0LmNzcz8zODA0Il0sInNvdXJjZXNDb250ZW50IjpbIi8vIEV4cG9ydHNcbm1vZHVsZS5leHBvcnRzID0ge1xuXHRcInN0eWxlXCI6IHtcImZvbnRGYW1pbHlcIjpcIidfX1BsdXNfSmFrYXJ0YV9TYW5zX2ExMTc3MycsICdfX1BsdXNfSmFrYXJ0YV9TYW5zX0ZhbGxiYWNrX2ExMTc3MydcIixcImZvbnRTdHlsZVwiOlwibm9ybWFsXCJ9LFxuXHRcImNsYXNzTmFtZVwiOiBcIl9fY2xhc3NOYW1lX2ExMTc3M1wiLFxuXHRcInZhcmlhYmxlXCI6IFwiX192YXJpYWJsZV9hMTE3NzNcIlxufTtcbiJdLCJuYW1lcyI6W10sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///(rsc)/./node_modules/next/font/google/target.css?{\"path\":\"src\\\\app\\\\layout.tsx\",\"import\":\"Plus_Jakarta_Sans\",\"arguments\":[{\"subsets\":[\"latin\"],\"weight\":[\"400\",\"500\",\"600\",\"700\",\"800\"],\"display\":\"swap\",\"variable\":\"--font-plus-jakarta\"}],\"variableName\":\"plusJakartaSans\"}\n");
+
+/***/ }),
+
 /***/ "(ssr)/./node_modules/next/dist/api/link.js":
 /*!********************************************!*\
   !*** ./node_modules/next/dist/api/link.js ***!

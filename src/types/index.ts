@@ -38,7 +38,7 @@ export interface FixedExpense {
   title: string;
   amount: number;
   category: ExpenseCategory;
-  dueDate: number; // Day of month e.g. 5 for 5th
+  dueDate: number; // Day of month e.g. 15 for 15th
   frequency: 'Monthly' | 'Quarterly' | 'Yearly';
   status: 'paid' | 'pending';
   notes?: string;
@@ -98,10 +98,14 @@ export interface FinancialGoal {
   createdAt: string;
 }
 
+export type ReminderTiming = 'same_day' | '1_day' | '3_days' | '7_days';
+
 export interface UserSettings {
   currency: string; // '₹', '$', '€', '£'
   monthlyBudget: number;
   customCategories: string[];
+  soundEnabled?: boolean;
+  reminderTiming?: ReminderTiming;
 }
 
 export interface UserProfile {
@@ -112,5 +116,17 @@ export interface UserProfile {
   photoURL: string | null;
   emailVerified: boolean;
   isDemo?: boolean;
+  createdAt: string;
+}
+
+export interface NotificationItem {
+  id: string;
+  userId?: string;
+  title: string;
+  message: string;
+  type: 'bill_due' | 'bill_upcoming' | 'completed' | 'system';
+  date: string;
+  read: boolean;
+  billId?: string;
   createdAt: string;
 }

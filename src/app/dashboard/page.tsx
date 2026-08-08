@@ -4,302 +4,239 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useFinance } from "@/context/FinanceContext";
 import { useAuth } from "@/context/AuthContext";
-import { formatCurrency, getMonthLabel } from "@/lib/utils";
 import { SummaryCard } from "@/components/dashboard/SummaryCard";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ExpenseCard } from "@/components/expenses/ExpenseCard";
+import { FixedExpenseCard } from "@/components/fixed/FixedExpenseCard";
+import { MemberCard } from "@/components/income/MemberCard";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ExpenseModal } from "@/components/expenses/ExpenseModal";
 import { ProofViewerModal } from "@/components/expenses/ProofViewerModal";
-import { MemberCard } from "@/components/income/MemberCard";
-import { FixedExpenseCard } from "@/components/fixed/FixedExpenseCard";
-import { TaskItem } from "@/components/planner/TaskItem";
-import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { formatCurrency, getMonthLabel } from "@/lib/utils";
 import {
   Wallet,
   Receipt,
-  PiggyBank,
   Users,
-  CalendarDays,
-  CheckSquare,
-  ArrowRight,
+  PiggyBank,
   PlusCircle,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
-import { Expense } from "@/types";
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const {
     selectedMonth,
     selectedMonthExpenses,
+    fixedExpenses,
+    members,
     totalContribution,
     totalExpenses,
     remainingBalance,
     savings,
     budgetProgress,
-    members,
-    fixedExpenses,
-    tasks,
     settings,
     deleteExpense,
-    toggleMemberPaid,
-    updateFixedExpense,
     deleteFixedExpense,
-    toggleTaskCompleted,
-    deleteTask,
+    toggleMemberPaid,
   } = useFinance();
 
-  const currency = settings.currency || "₹";
-
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [activeProofUrl, setActiveProofUrl] = useState<string | undefined>(undefined);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [activeProofUrl, setActiveProofUrl] = useState<string | undefined>(undefined);
+
+  const currency = settings.currency || "₹";
+  const monthLabel = getMonthLabel(selectedMonth);
 
   return (
-    <div className="space-y-8">
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-500 rounded-3xl p-6 sm:p-8 text-white shadow-lg shadow-emerald-600/15 relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <span className="text-emerald-100 text-xs font-bold uppercase tracking-wider block mb-1">
-              {getMonthLabel(selectedMonth)} Financial Overview
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-              Welcome back, {user?.displayName || user?.username || "Friend"}! 👋
-            </h1>
-            <p className="text-emerald-100/90 text-xs sm:text-sm mt-1 max-w-xl">
-              Track group contributions, fixed recurring bills, and stay within your monthly budget.
-            </p>
+    <div className="space-y-6">
+      {/* Header Banner */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-600 p-6 sm:p-8 rounded-3xl text-white shadow-lg shadow-emerald-700/20">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 px-3 py-1 rounded-full text-xs font-bold text-emerald-100">
+            <Sparkles className="w-3.5 h-3.5 text-orange-300" />
+            <span>Welcome back, {user?.displayName || user?.username || "Friend"}!</span>
           </div>
-          <div className="shrink-0">
-            <Button
-              variant="secondary"
-              onClick={() => setIsAddExpenseOpen(true)}
-              icon={<PlusCircle className="w-4 h-4" />}
-            >
-              Add Expense
-            </Button>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+            Financial Dashboard — {monthLabel}
+          </h1>
+          <p className="text-xs sm:text-sm text-emerald-100 max-w-xl">
+            Real-time breakdown of your group contributions, fixed recurring bills, and variable daily expenses.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            onClick={() => setIsAddExpenseOpen(true)}
+            className="shadow-md shadow-orange-500/25 px-5 py-3 text-sm font-bold"
+            icon={<PlusCircle className="w-4 h-4" />}
+          >
+            Add Expense
+          </Button>
         </div>
       </div>
 
       {/* Top Section: Financial Metrics Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SummaryCard
           title="Monthly Pool"
           amount={totalContribution}
           currency={currency}
-          icon={<Users className="w-5 h-5" />}
-          variant="green"
-          subtitle={`${members.filter((m) => m.isPaid).length} of ${members.length} members paid`}
+          icon={Users}
+          iconBgColor="bg-emerald-50 border-emerald-200"
+          iconColor="text-emerald-600"
+          badgeText={`${members.filter((m) => m.isPaid).length} / ${members.length} Paid`}
+          badgeVariant="success"
         />
         <SummaryCard
           title="Total Expenses"
           amount={totalExpenses}
           currency={currency}
-          icon={<Receipt className="w-5 h-5" />}
-          variant="orange"
-          subtitle={`${selectedMonthExpenses.length} transaction records`}
+          icon={Receipt}
+          iconBgColor="bg-rose-50 border-rose-200"
+          iconColor="text-rose-600"
+          badgeText={`${selectedMonthExpenses.length} Items`}
+          badgeVariant="neutral"
         />
         <SummaryCard
           title="Remaining Balance"
           amount={remainingBalance}
           currency={currency}
-          icon={<Wallet className="w-5 h-5" />}
-          variant={remainingBalance >= 0 ? "default" : "orange"}
-          subtitle={remainingBalance >= 0 ? "Healthy cash reserve" : "Budget threshold exceeded!"}
+          icon={Wallet}
+          iconBgColor={remainingBalance >= 0 ? "bg-emerald-50 border-emerald-200" : "bg-rose-50 border-rose-200"}
+          iconColor={remainingBalance >= 0 ? "text-emerald-600" : "text-rose-600"}
+          badgeText={remainingBalance >= 0 ? "Healthy Reserve" : "Budget Over-spent"}
+          badgeVariant={remainingBalance >= 0 ? "success" : "danger"}
         />
         <SummaryCard
           title="Total Savings"
           amount={savings}
           currency={currency}
-          icon={<PiggyBank className="w-5 h-5" />}
-          variant="green"
-          subtitle="Calculated net savings"
+          icon={PiggyBank}
+          iconBgColor="bg-amber-50 border-amber-200"
+          iconColor="text-amber-600"
+          badgeText="Net Target"
+          badgeVariant="warning"
         />
       </div>
 
       {/* Budget Progress Bar Card */}
       <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-soft space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-bold text-slate-900">Budget Progress Bar</h3>
-            <p className="text-xs text-slate-500">
-              Spent {formatCurrency(totalExpenses, currency)} out of {formatCurrency(settings.monthlyBudget || totalContribution || 10000, currency)} target budget
-            </p>
-          </div>
-          <span className="text-sm font-black text-slate-800">
-            {formatCurrency(Math.max(0, (settings.monthlyBudget || totalContribution || 10000) - totalExpenses), currency)} Remaining
-          </span>
-        </div>
         <ProgressBar
           progress={budgetProgress}
-          size="lg"
-          subLabel={`Budget Used: ${Math.round(budgetProgress)}% • Remaining: ${Math.max(0, 100 - Math.round(budgetProgress))}%`}
+          label="Monthly Budget Progress"
+          subLabel={`Spent ${formatCurrency(totalExpenses, currency)} out of ${formatCurrency(settings.monthlyBudget || totalContribution || 10000, currency)} target budget`}
+          showPercentage={true}
         />
       </div>
 
-      {/* 5-Member Group Contribution Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-slate-900">Group Member Contributions</h3>
-            <p className="text-xs text-slate-500">Track 5-member monthly pooled funds ({formatCurrency(totalContribution, currency)} total)</p>
-          </div>
-          <Link href="/income">
-            <Button variant="outline" size="sm" icon={<ArrowRight className="w-4 h-4" />}>
-              Manage Members
-            </Button>
-          </Link>
-        </div>
-
-        {members.length === 0 ? (
-          <EmptyState
-            title="No group members added yet"
-            description="Add contributing group members to pool monthly funds."
-            actionLabel="Add Member"
-            onAction={() => window.location.assign("/income")}
-          />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            {members.map((member) => (
-              <MemberCard
-                key={member.id}
-                member={member}
-                currency={currency}
-                onEdit={() => {}}
-                onDelete={() => {}}
-                onTogglePaid={toggleMemberPaid}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Recent Expenses List */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
+      {/* Main Grid: Recent Transactions & Fixed Bills */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left 2 Cols: Recent Expenses */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-slate-900">Recent Transactions</h3>
-            <p className="text-xs text-slate-500">Latest expense items for {getMonthLabel(selectedMonth)}</p>
-          </div>
-          <Link href="/expenses">
-            <Button variant="outline" size="sm" icon={<ArrowRight className="w-4 h-4" />}>
-              View All Expenses
-            </Button>
-          </Link>
-        </div>
-
-        {selectedMonthExpenses.length === 0 ? (
-          <EmptyState
-            title="No expenses recorded yet"
-            description="Start by adding your first expense transaction."
-            actionLabel="Add Expense"
-            onAction={() => setIsAddExpenseOpen(true)}
-          />
-        ) : (
-          <div className="space-y-3">
-            {selectedMonthExpenses.slice(0, 5).map((exp) => (
-              <ExpenseCard
-                key={exp.id}
-                expense={exp}
-                currency={currency}
-                onEdit={(item) => setEditingExpense(item)}
-                onDelete={deleteExpense}
-                onViewProof={(url) => setActiveProofUrl(url)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Fixed Expenses & Planner Tasks Preview Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Fixed Bills Overview */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-emerald-600" />
-              Fixed Recurring Bills
-            </h3>
-            <Link href="/fixed-expenses">
-              <Button variant="ghost" size="sm" className="text-xs font-semibold text-emerald-600">
-                View All
-              </Button>
+            <Link href="/expenses" className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+              View All ({selectedMonthExpenses.length})
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-          {fixedExpenses.length === 0 ? (
-            <p className="text-xs text-slate-400 bg-white p-4 rounded-2xl border border-slate-200">
-              No fixed bills added. Click "View All" to add recurring rent or bills.
-            </p>
+
+          {selectedMonthExpenses.length === 0 ? (
+            <Card className="p-8 text-center space-y-3">
+              <Receipt className="w-10 h-10 text-slate-300 mx-auto" />
+              <p className="text-xs text-slate-500 font-medium">No expenses logged for {monthLabel} yet.</p>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setIsAddExpenseOpen(true)}
+                icon={<PlusCircle className="w-4 h-4" />}
+              >
+                Log First Expense
+              </Button>
+            </Card>
           ) : (
             <div className="space-y-3">
-              {fixedExpenses.slice(0, 3).map((fixed) => (
-                <FixedExpenseCard
-                  key={fixed.id}
-                  fixedExpense={fixed}
+              {selectedMonthExpenses.slice(0, 5).map((exp) => (
+                <ExpenseCard
+                  key={exp.id}
+                  expense={exp}
                   currency={currency}
-                  onEdit={() => {}}
-                  onDelete={deleteFixedExpense}
-                  onToggleStatus={(id) => {
-                    const item = fixedExpenses.find((f) => f.id === id);
-                    if (item) {
-                      updateFixedExpense(id, {
-                        status: item.status === "paid" ? "pending" : "paid",
-                      });
-                    }
-                  }}
+                  onDelete={(id) => deleteExpense(id)}
+                  onViewProof={(url) => setActiveProofUrl(url)}
                 />
               ))}
             </div>
           )}
         </div>
 
-        {/* Planner Tasks Overview */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <CheckSquare className="w-4 h-4 text-orange-600" />
-              Upcoming Planner Tasks
-            </h3>
-            <Link href="/planner">
-              <Button variant="ghost" size="sm" className="text-xs font-semibold text-orange-600">
-                View Planner
-              </Button>
-            </Link>
-          </div>
-          {tasks.length === 0 ? (
-            <p className="text-xs text-slate-400 bg-white p-4 rounded-2xl border border-slate-200">
-              No planner tasks for today. Click "View Planner" to add tasks.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {tasks.slice(0, 3).map((task) => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  onToggleCompleted={toggleTaskCompleted}
-                  onEdit={() => {}}
-                  onDelete={deleteTask}
-                />
-              ))}
+        {/* Right 1 Col: Fixed Recurring Bills & Member Contributions */}
+        <div className="space-y-6">
+          {/* Fixed Bills */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">Fixed Recurring Bills</h3>
+              <Link href="/fixed-expenses" className="text-xs font-bold text-emerald-600 hover:text-emerald-700">
+                Manage
+              </Link>
             </div>
-          )}
+
+            {fixedExpenses.length === 0 ? (
+              <Card className="p-6 text-center text-xs text-slate-500">
+                No fixed bills configured.
+              </Card>
+            ) : (
+              <div className="space-y-2.5">
+                {fixedExpenses.slice(0, 3).map((fixed) => (
+                  <FixedExpenseCard
+                    key={fixed.id}
+                    fixedExpense={fixed}
+                    currency={currency}
+                    onDelete={(id) => deleteFixedExpense(id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Member Pool Summary */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">Group Members</h3>
+              <Link href="/income" className="text-xs font-bold text-emerald-600 hover:text-emerald-700">
+                View Pool
+              </Link>
+            </div>
+
+            {members.length === 0 ? (
+              <Card className="p-6 text-center text-xs text-slate-500">
+                No members added to the pool yet.
+              </Card>
+            ) : (
+              <div className="space-y-2.5">
+                {members.slice(0, 3).map((mem) => (
+                  <MemberCard
+                    key={mem.id}
+                    member={mem}
+                    currency={currency}
+                    onTogglePaid={(id) => toggleMemberPaid(id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Edit/Add Expense Modals */}
+      {/* Add Expense Modal */}
       <ExpenseModal
-        isOpen={isAddExpenseOpen || Boolean(editingExpense)}
-        onClose={() => {
-          setIsAddExpenseOpen(false);
-          setEditingExpense(null);
-        }}
-        expenseToEdit={editingExpense}
+        isOpen={isAddExpenseOpen}
+        onClose={() => setIsAddExpenseOpen(false)}
         onViewProof={(url) => setActiveProofUrl(url)}
       />
 
+      {/* Proof Lightbox */}
       <ProofViewerModal
         isOpen={Boolean(activeProofUrl)}
         onClose={() => setActiveProofUrl(undefined)}
