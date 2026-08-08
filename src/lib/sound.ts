@@ -2,6 +2,25 @@
 
 // Web Audio API Synthesizer for zero-latency, lightweight UI sound feedback
 let audioCtx: AudioContext | null = null;
+let isUnlocked = false;
+
+function initAudioUnlock() {
+  if (typeof window === "undefined" || isUnlocked) return;
+  const unlock = () => {
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume().catch(() => {});
+    }
+    isUnlocked = true;
+    window.removeEventListener("pointerdown", unlock);
+    window.removeEventListener("keydown", unlock);
+  };
+  window.addEventListener("pointerdown", unlock, { once: true });
+  window.addEventListener("keydown", unlock, { once: true });
+}
+
+if (typeof window !== "undefined") {
+  initAudioUnlock();
+}
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -95,3 +114,4 @@ export function playSuccessSound(): void {
     // Ignore audio errors gracefully
   }
 }
+

@@ -21,7 +21,7 @@ export const SmartInsightsCards: React.FC = () => {
     selectedMonthExpenses,
     remainingBalance,
     fixedExpensesTotal,
-    totalContribution,
+    monthlyCash,
     settings,
   } = useFinance();
 
@@ -43,7 +43,7 @@ export const SmartInsightsCards: React.FC = () => {
   });
 
   // Fixed expenses ratio
-  const fixedRatio = totalContribution > 0 ? Math.round((fixedExpensesTotal / totalContribution) * 100) : 0;
+  const fixedRatio = monthlyCash > 0 ? Math.round((fixedExpensesTotal / monthlyCash) * 100) : 0;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

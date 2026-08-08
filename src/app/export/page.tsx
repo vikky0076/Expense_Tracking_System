@@ -14,7 +14,7 @@ export default function ExportPage() {
     selectedMonthExpenses,
     fixedExpensesTotal,
     variableExpensesTotal,
-    totalContribution,
+    monthlyCash,
     totalExpenses,
     remainingBalance,
     settings,
@@ -40,7 +40,7 @@ export default function ExportPage() {
         expenses: selectedMonthExpenses,
         fixedExpenses: fixedExpensesTotal,
         variableExpenses: variableExpensesTotal,
-        totalContribution,
+        totalContribution: monthlyCash,
         totalExpenses,
         remainingBalance,
         currency: settings.currency,
@@ -128,19 +128,19 @@ export default function ExportPage() {
         <h3 className="text-base font-bold text-slate-900">Statement Preview — {monthLabel}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
           <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-            <span className="text-[10px] font-bold uppercase text-slate-400">Total Group Pool</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500">Monthly Cash</span>
             <span className="text-base font-black text-slate-900 block mt-0.5">
-              {formatCurrency(totalContribution, settings.currency)}
+              {formatCurrency(monthlyCash, settings.currency)}
             </span>
           </div>
           <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-            <span className="text-[10px] font-bold uppercase text-slate-400">Total Month Spend</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500">Total Month Spend</span>
             <span className="text-base font-black text-slate-900 block mt-0.5">
               {formatCurrency(totalExpenses, settings.currency)}
             </span>
           </div>
           <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-            <span className="text-[10px] font-bold uppercase text-slate-400">Net Reserve Balance</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500">Net Reserve Balance</span>
             <span className="text-base font-black text-emerald-600 block mt-0.5">
               {formatCurrency(remainingBalance, settings.currency)}
             </span>
@@ -150,3 +150,4 @@ export default function ExportPage() {
     </div>
   );
 }
+

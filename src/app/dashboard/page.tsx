@@ -31,14 +31,17 @@ export default function DashboardPage() {
     selectedMonthExpenses,
     fixedExpenses,
     members,
-    totalContribution,
+    monthlyCash,
+    pendingContribution,
     totalExpenses,
+    pendingFixedExpensesTotal,
     remainingBalance,
     savings,
     budgetProgress,
     settings,
     deleteExpense,
     deleteFixedExpense,
+    toggleFixedExpenseStatus,
     toggleMemberPaid,
   } = useFinance();
 
@@ -80,14 +83,15 @@ export default function DashboardPage() {
       {/* Top Section: Financial Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SummaryCard
-          title="Monthly Pool"
-          amount={totalContribution}
+          title="Monthly Cash"
+          amount={monthlyCash}
           currency={currency}
           icon={Users}
           iconBgColor="bg-emerald-50 border-emerald-200"
           iconColor="text-emerald-600"
-          badgeText={`${members.filter((m) => m.isPaid).length} / ${members.length} Paid`}
+          badgeText={`${members.filter((m) => m.isPaid).length}/${members.length} Paid`}
           badgeVariant="success"
+          subtitle={`Pending: ${formatCurrency(pendingContribution, currency)}`}
         />
         <SummaryCard
           title="Total Expenses"
@@ -98,6 +102,7 @@ export default function DashboardPage() {
           iconColor="text-rose-600"
           badgeText={`${selectedMonthExpenses.length} Items`}
           badgeVariant="neutral"
+          subtitle={`Pending Bills: ${formatCurrency(pendingFixedExpensesTotal, currency)}`}
         />
         <SummaryCard
           title="Remaining Balance"
@@ -126,7 +131,7 @@ export default function DashboardPage() {
         <ProgressBar
           progress={budgetProgress}
           label="Monthly Budget Progress"
-          subLabel={`Spent ${formatCurrency(totalExpenses, currency)} out of ${formatCurrency(settings.monthlyBudget || totalContribution || 10000, currency)} target budget`}
+          subLabel={`Spent ${formatCurrency(totalExpenses, currency)} out of ${formatCurrency(settings.monthlyBudget || monthlyCash || 10000, currency)} target budget`}
           showPercentage={true}
         />
       </div>
@@ -194,6 +199,7 @@ export default function DashboardPage() {
                     fixedExpense={fixed}
                     currency={currency}
                     onDelete={(id) => deleteFixedExpense(id)}
+                    onToggleStatus={(id) => toggleFixedExpenseStatus(id)}
                   />
                 ))}
               </div>
@@ -205,13 +211,13 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">Group Members</h3>
               <Link href="/income" className="text-xs font-bold text-emerald-600 hover:text-emerald-700">
-                View Pool
+                View Cash
               </Link>
             </div>
 
             {members.length === 0 ? (
               <Card className="p-6 text-center text-xs text-slate-500">
-                No members added to the pool yet.
+                No members added yet.
               </Card>
             ) : (
               <div className="space-y-2.5">
@@ -245,3 +251,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

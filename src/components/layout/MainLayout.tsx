@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { FinanceProvider } from "@/context/FinanceContext";
+import { FinanceProvider, useFinance } from "@/context/FinanceContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { Header } from "./Header";
@@ -23,30 +23,32 @@ const PUBLIC_ROUTES = [
 export const MainLayoutContent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading, isDemo } = useAuth();
+  const { user, loading: authLoading, isDemo } = useAuth();
+  const { loading: financeLoading } = useFinance();
 
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [activeProofUrl, setActiveProofUrl] = useState<string | undefined>(undefined);
 
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const isSessionLoading = authLoading || (Boolean(user) && financeLoading);
 
   // Route Protection Guard
   useEffect(() => {
-    if (!loading && !user && !isDemo && !isPublicRoute) {
+    if (!authLoading && !user && !isDemo && !isPublicRoute) {
       router.push("/auth/signin");
     }
-  }, [user, loading, isDemo, isPublicRoute, router]);
+  }, [user, authLoading, isDemo, isPublicRoute, router]);
 
   if (isPublicRoute) {
     return <>{children}</>;
   }
 
-  if (loading) {
+  if (isSessionLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-bold text-slate-500">Securing Session...</span>
+          <span className="text-xs font-bold text-slate-500">Securing Session & Syncing Cloud Data...</span>
         </div>
       </div>
     );
@@ -96,3 +98,4 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     </AuthProvider>
   );
 };
+

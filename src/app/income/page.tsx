@@ -13,7 +13,8 @@ import { formatCurrency, getMonthLabel } from "@/lib/utils";
 export default function IncomePage() {
   const {
     members,
-    totalContribution,
+    monthlyCash,
+    pendingContribution,
     toggleMemberPaid,
     deleteMember,
     selectedMonth,
@@ -27,8 +28,6 @@ export default function IncomePage() {
   const [editingMember, setEditingMember] = useState<Member | null>(null);
 
   const paidCount = members.filter((m) => m.isPaid).length;
-  const paidAmount = members.filter((m) => m.isPaid).reduce((sum, m) => sum + m.contributionAmount, 0);
-  const pendingAmount = totalContribution - paidAmount;
 
   return (
     <div className="space-y-6">
@@ -40,7 +39,7 @@ export default function IncomePage() {
             Group Income & 5-Member Contributions
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Pooled monthly group fund for {getMonthLabel(selectedMonth)}
+            Group member cash for {getMonthLabel(selectedMonth)}
           </p>
         </div>
 
@@ -59,26 +58,26 @@ export default function IncomePage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="bg-emerald-50/50 border-emerald-200">
-          <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 block mb-1">
-            Total Monthly Contribution Pool
+          <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-700 block mb-1">
+            Monthly Cash
           </span>
           <h3 className="text-2xl font-black text-emerald-900">
-            {formatCurrency(totalContribution, currency)}
+            {formatCurrency(monthlyCash, currency)}
           </h3>
           <p className="text-xs text-emerald-600 font-medium mt-1">
-            Combined pool from {members.length} members
+            Collected from {paidCount} paid members
           </p>
         </Card>
 
         <Card className="bg-white">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Paid Amount
+            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-600">
+              Paid Member Cash
             </span>
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           </div>
           <h3 className="text-2xl font-black text-slate-900">
-            {formatCurrency(paidAmount, currency)}
+            {formatCurrency(monthlyCash, currency)}
           </h3>
           <p className="text-xs text-emerald-600 font-medium mt-1">
             {paidCount} of {members.length} members paid
@@ -87,13 +86,13 @@ export default function IncomePage() {
 
         <Card className="bg-white">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Pending Payments
+            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-600">
+              Pending Contributions
             </span>
             <Clock className="w-4 h-4 text-orange-600" />
           </div>
           <h3 className="text-2xl font-black text-slate-900">
-            {formatCurrency(pendingAmount, currency)}
+            {formatCurrency(pendingContribution, currency)}
           </h3>
           <p className="text-xs text-orange-600 font-medium mt-1">
             {members.length - paidCount} members pending
@@ -126,7 +125,7 @@ export default function IncomePage() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-slate-900">Contribution History Log</h3>
-            <p className="text-xs text-slate-500">Historical pool records by month</p>
+            <p className="text-xs text-slate-500">Historical cash records by month</p>
           </div>
           <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
             Automated Tracking
@@ -138,7 +137,7 @@ export default function IncomePage() {
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-500 font-bold uppercase tracking-wider">
                 <th className="p-3 rounded-l-xl">Month</th>
-                <th className="p-3">Total Contribution</th>
+                <th className="p-3">Monthly Cash (Paid)</th>
                 <th className="p-3">Members Count</th>
                 <th className="p-3 rounded-r-xl">Status</th>
               </tr>
@@ -151,7 +150,7 @@ export default function IncomePage() {
                     {m.label}
                   </td>
                   <td className="p-3 font-bold text-slate-900">
-                    {formatCurrency(totalContribution, currency)}
+                    {formatCurrency(monthlyCash, currency)}
                   </td>
                   <td className="p-3">{members.length} Members</td>
                   <td className="p-3">
@@ -178,3 +177,4 @@ export default function IncomePage() {
     </div>
   );
 }
+

@@ -6,6 +6,8 @@ import { useFinance } from "./FinanceContext";
 import { useAuth } from "./AuthContext";
 import { playSuccessSound } from "@/lib/sound";
 import { generateId } from "@/lib/utils";
+import { db } from "@/lib/firebase";
+import { doc, onSnapshot, setDoc } from "firebase/firestore";
 
 interface NotificationContextType {
   notifications: NotificationItem[];
@@ -26,7 +28,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [permissionState, setPermissionState] = useState<NotificationPermission | "unsupported">("default");
 
-  const storagePrefix = user ? `fintrack_${user.uid}_` : "fintrack_guest_";
   const reminderTiming: ReminderTiming = settings.reminderTiming || "1_day";
 
   // Check browser notification permission on mount
@@ -38,30 +39,39 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
-  // Load user notifications from LocalStorage
+  // Subscribe to real-time notifications from Cloud Firestore
   useEffect(() => {
-    if (!user && !isDemo) {
+    if (!user || isDemo) {
       setNotifications([]);
       return;
     }
-    try {
-      const stored = localStorage.getItem(`${storagePrefix}notifications`);
-      if (stored) {
-        setNotifications(JSON.parse(stored));
-      } else {
-        setNotifications([]);
-      }
-    } catch (e) {
-      setNotifications([]);
-    }
-  }, [user, isDemo, storagePrefix]);
 
-  // Save notifications to LocalStorage on change
-  useEffect(() => {
-    if (user && !isDemo) {
-      localStorage.setItem(`${storagePrefix}notifications`, JSON.stringify(notifications));
-    }
-  }, [notifications, user, isDemo, storagePrefix]);
+    const userDocRef = doc(db, "users", user.uid);
+    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (Array.isArray(data.notifications)) {
+          setNotifications(data.notifications);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user, isDemo]);
+
+  // Helper to persist notification changes to Firestore
+  const saveNotificationsToFirestore = useCallback(
+    async (updatedNotifs: NotificationItem[]) => {
+      if (!user || isDemo) return;
+      try {
+        const userDocRef = doc(db, "users", user.uid);
+        await setDoc(userDocRef, { notifications: updatedNotifs, updatedAt: new Date().toISOString() }, { merge: true });
+      } catch (e) {
+        console.error("Error saving notifications to Firestore:", e);
+      }
+    },
+    [user, isDemo]
+  );
 
   // Automated Fixed Bill Due-Date Inspector & Reminder Generator
   useEffect(() => {
@@ -84,8 +94,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const daysDiff = bill.dueDate - currentDay;
       const dedupeKey = `fintrack_notif_sent_${bill.id}_${monthKey}_${timingDays}`;
 
-      // Check if alert was already sent for this cycle
-      const alreadySent = localStorage.getItem(dedupeKey);
+      // Check if alert was already sent for this cycle on this browser session
+      const alreadySent = typeof window !== "undefined" ? localStorage.getItem(dedupeKey) : null;
       if (alreadySent) return;
 
       let isTrigger = false;
@@ -119,7 +129,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         };
 
         newGeneratedNotifs.push(notif);
-        localStorage.setItem(dedupeKey, "true");
+        if (typeof window !== "undefined") {
+          localStorage.setItem(dedupeKey, "true");
+        }
 
         // Trigger browser push notification if permission is granted
         if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
@@ -136,9 +148,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     });
 
     if (newGeneratedNotifs.length > 0) {
-      setNotifications((prev) => [...newGeneratedNotifs, ...prev]);
+      setNotifications((prev) => {
+        const updated = [...newGeneratedNotifs, ...prev];
+        saveNotificationsToFirestore(updated);
+        return updated;
+      });
     }
-  }, [fixedExpenses, reminderTiming, user]);
+  }, [fixedExpenses, reminderTiming, user, saveNotificationsToFirestore]);
 
   // Request browser notification permission explicitly
   const requestBrowserPermission = async (): Promise<boolean> => {
@@ -157,24 +173,41 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   // Actions
-  const markAsRead = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-  }, []);
+  const markAsRead = useCallback(
+    (id: string) => {
+      setNotifications((prev) => {
+        const updated = prev.map((n) => (n.id === id ? { ...n, read: true } : n));
+        saveNotificationsToFirestore(updated);
+        return updated;
+      });
+    },
+    [saveNotificationsToFirestore]
+  );
 
   const markAllAsRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setNotifications((prev) => {
+      const updated = prev.map((n) => ({ ...n, read: true }));
+      saveNotificationsToFirestore(updated);
+      return updated;
+    });
     playSuccessSound();
-  }, []);
+  }, [saveNotificationsToFirestore]);
 
-  const deleteNotification = useCallback((id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  }, []);
+  const deleteNotification = useCallback(
+    (id: string) => {
+      setNotifications((prev) => {
+        const updated = prev.filter((n) => n.id !== id);
+        saveNotificationsToFirestore(updated);
+        return updated;
+      });
+    },
+    [saveNotificationsToFirestore]
+  );
 
   const clearAllNotifications = useCallback(() => {
     setNotifications([]);
-  }, []);
+    saveNotificationsToFirestore([]);
+  }, [saveNotificationsToFirestore]);
 
   const unreadCount = useMemo(() => {
     return notifications.filter((n) => !n.read).length;
@@ -205,3 +238,4 @@ export const useNotifications = () => {
   }
   return context;
 };
+

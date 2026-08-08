@@ -108,8 +108,8 @@ export default function LandingPage() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Monthly Pool</span>
-                  <span className="text-base font-black text-slate-900 block mt-0.5">Pooled Fund</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Monthly Cash</span>
+                  <span className="text-base font-black text-slate-900 block mt-0.5">Paid Cash</span>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Total Spent</span>

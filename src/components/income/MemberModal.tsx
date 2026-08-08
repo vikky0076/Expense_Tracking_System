@@ -78,7 +78,7 @@ export const MemberModal: React.FC<MemberModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={memberToEdit ? "Edit Member Contribution" : "Add New Group Member"}
-      description="Set individual contribution amount and payment status for monthly pool."
+      description="Set individual contribution amount and payment status for monthly cash."
       maxWidth="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4 pt-1">

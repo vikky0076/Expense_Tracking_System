@@ -16,29 +16,35 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // User-scoped personal expenses
+    // User-scoped personal expenses (fallback rules)
     match /expenses/{expenseId} {
-      allow read, write: if request.auth != null;
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
 
-    // Fixed recurring bills
+    // Fixed recurring bills (fallback rules)
     match /fixedExpenses/{fixedId} {
-      allow read, write: if request.auth != null;
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
 
-    // Pooled group members
+    // Pooled group members (fallback rules)
     match /members/{memberId} {
-      allow read, write: if request.auth != null;
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
 
-    // Planner tasks
+    // Planner tasks (fallback rules)
     match /plannerTasks/{taskId} {
-      allow read, write: if request.auth != null;
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
 
-    // Savings goals
+    // Savings goals (fallback rules)
     match /financialGoals/{goalId} {
-      allow read, write: if request.auth != null;
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
   }
 }
+

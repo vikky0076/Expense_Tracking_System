@@ -32,17 +32,17 @@ export const SummaryCard: React.FC<SummaryCardProps> = React.memo(({
   progress,
 }) => {
   const badgeClasses = {
-    success: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    warning: "bg-amber-50 text-amber-700 border-amber-200",
-    danger: "bg-rose-50 text-rose-700 border-rose-200",
-    neutral: "bg-slate-100 text-slate-700 border-slate-200",
+    success: "bg-emerald-100 text-emerald-800 border-emerald-300 font-bold",
+    warning: "bg-amber-100 text-amber-800 border-amber-300 font-bold",
+    danger: "bg-rose-100 text-rose-800 border-rose-300 font-bold",
+    neutral: "bg-slate-100 text-slate-800 border-slate-300 font-bold",
   };
 
   return (
     <Card className="flex flex-col justify-between p-5 space-y-3 hover:shadow-card transition-shadow">
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <span className="text-xs font-semibold text-slate-500 block">
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-600 block">
             {title}
           </span>
           <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
@@ -58,10 +58,14 @@ export const SummaryCard: React.FC<SummaryCardProps> = React.memo(({
       {(subtitle || badgeText || progress !== undefined) && (
         <div className="pt-2 border-t border-slate-100 space-y-2">
           <div className="flex items-center justify-between text-xs">
-            {subtitle && <span className="text-slate-500 font-medium">{subtitle}</span>}
+            {subtitle ? (
+              <span className="text-slate-500 font-semibold truncate max-w-[140px]">{subtitle}</span>
+            ) : (
+              <span />
+            )}
 
             {badgeText && (
-              <span className={cn("px-2.5 py-0.5 rounded-full border font-bold text-[11px]", badgeClasses[badgeVariant])}>
+              <span className={cn("px-2.5 py-0.5 rounded-full border text-[10px] uppercase tracking-wider shrink-0", badgeClasses[badgeVariant])}>
                 {badgeText}
               </span>
             )}
@@ -85,3 +89,4 @@ export const SummaryCard: React.FC<SummaryCardProps> = React.memo(({
 });
 
 SummaryCard.displayName = "SummaryCard";
+

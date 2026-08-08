@@ -11,20 +11,18 @@ import { FixedExpense } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 
 export default function FixedExpensesPage() {
-  const { fixedExpenses, fixedExpensesTotal, updateFixedExpense, deleteFixedExpense, settings } = useFinance();
+  const {
+    fixedExpenses,
+    paidFixedExpensesTotal,
+    pendingFixedExpensesTotal,
+    toggleFixedExpenseStatus,
+    deleteFixedExpense,
+    settings,
+  } = useFinance();
   const currency = settings.currency || "₹";
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFixed, setEditingFixed] = useState<FixedExpense | null>(null);
-
-  const toggleStatus = (id: string) => {
-    const item = fixedExpenses.find((f) => f.id === id);
-    if (item) {
-      updateFixedExpense(id, {
-        status: item.status === "paid" ? "pending" : "paid",
-      });
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -36,8 +34,11 @@ export default function FixedExpensesPage() {
             Fixed Recurring Bills & Rent
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Total Monthly Fixed Commitment:{" "}
-            <span className="font-bold text-slate-800">{formatCurrency(fixedExpensesTotal, currency)}</span>
+            Paid Commitment:{" "}
+            <span className="font-extrabold text-emerald-700">{formatCurrency(paidFixedExpensesTotal, currency)}</span>
+            {" • "}
+            Pending Bills:{" "}
+            <span className="font-extrabold text-amber-700">{formatCurrency(pendingFixedExpensesTotal, currency)}</span>
           </p>
         </div>
 
@@ -73,7 +74,7 @@ export default function FixedExpensesPage() {
                 setIsModalOpen(true);
               }}
               onDelete={deleteFixedExpense}
-              onToggleStatus={toggleStatus}
+              onToggleStatus={toggleFixedExpenseStatus}
             />
           ))}
         </div>
@@ -91,3 +92,4 @@ export default function FixedExpensesPage() {
     </div>
   );
 }
+

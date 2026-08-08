@@ -1,5 +1,8 @@
+"use client";
+
 import React from "react";
 import { cn } from "@/lib/utils";
+import { playClickSound } from "@/lib/sound";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "outline" | "danger" | "ghost";
@@ -14,10 +17,11 @@ export const Button: React.FC<ButtonProps> = ({
   size = "md",
   icon,
   disabled,
+  onClick,
   ...props
 }) => {
   const baseStyles =
-    "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none";
+    "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer";
 
   const sizeStyles = {
     sm: "px-3 py-1.5 text-xs gap-1.5",
@@ -37,10 +41,16 @@ export const Button: React.FC<ButtonProps> = ({
     ghost: "bg-transparent hover:bg-slate-100 text-slate-600 hover:text-slate-900",
   };
 
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    playClickSound();
+    if (onClick) onClick(e);
+  };
+
   return (
     <button
       className={cn(baseStyles, sizeStyles[size], variantStyles[variant], className)}
       disabled={disabled}
+      onClick={handleClick}
       {...props}
     >
       {icon && <span className="shrink-0">{icon}</span>}
@@ -48,3 +58,4 @@ export const Button: React.FC<ButtonProps> = ({
     </button>
   );
 };
+
