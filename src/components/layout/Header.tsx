@@ -63,13 +63,13 @@ export const Header: React.FC = () => {
         {/* Notification Bell Badge Button */}
         <button
           onClick={handleToggleNotif}
-          className="relative p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors group"
+          className="relative p-2 sm:p-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100/90 border border-slate-200/60 transition-all flex items-center justify-center group shadow-2xs"
           title="Notifications"
           aria-label="View notifications"
         >
-          <Bell className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+          <Bell className="w-4 sm:w-5 h-4 sm:h-5 text-slate-700 group-hover:rotate-12 transition-transform duration-200" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 px-1.5 py-0.2 min-w-[18px] h-[18px] rounded-full bg-orange-500 text-white font-black text-[10px] flex items-center justify-center ring-2 ring-white animate-pulse">
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 text-white font-black text-[10px] rounded-full flex items-center justify-center ring-2 ring-white shadow-xs pointer-events-none transition-transform group-hover:scale-110">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}

@@ -1,45 +1,29 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SplashScreenProps {
   onComplete?: () => void;
-  brandSplashDurationMs?: number;
   loadingDurationMs?: number;
   minDurationMs?: number;
 }
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({
   onComplete,
-  brandSplashDurationMs = 700,
-  loadingDurationMs = 1400,
+  loadingDurationMs = 1200,
   minDurationMs,
 }) => {
-  const actualLoadingDuration = minDurationMs || loadingDurationMs;
-  const [showLoadingRing, setShowLoadingRing] = useState(false);
+  const actualDuration = minDurationMs || loadingDurationMs;
   const [progress, setProgress] = useState(0);
   const [isFadingOut, setIsFadingOut] = useState(false);
 
-  // Step 1: Splash Website Name first for initial delay
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowLoadingRing(true);
-    }, brandSplashDurationMs);
-
-    return () => clearTimeout(timer);
-  }, [brandSplashDurationMs]);
-
-  // Step 2: Once loading ring starts, tick progress 0% -> 100%
-  useEffect(() => {
-    if (!showLoadingRing) return;
-
     const startTime = Date.now();
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      const calculatedProgress = Math.min(100, Math.floor((elapsed / actualLoadingDuration) * 100));
-      
+      const calculatedProgress = Math.min(100, Math.floor((elapsed / actualDuration) * 100));
+
       setProgress(calculatedProgress);
 
       if (calculatedProgress >= 100) {
@@ -48,121 +32,135 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           setIsFadingOut(true);
           setTimeout(() => {
             if (onComplete) onComplete();
-          }, 450); // Fade-out completion
-        }, 150);
+          }, 400);
+        }, 120);
       }
-    }, 20);
+    }, 16);
 
     return () => clearInterval(interval);
-  }, [showLoadingRing, actualLoadingDuration, onComplete]);
+  }, [actualDuration, onComplete]);
 
-  // SVG circular calculation (r = 46)
-  const radius = 46;
-  const circumference = 2 * Math.PI * radius; // ~289.02
+  // SVG calculations for radius = 54
+  const radius = 54;
+  const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
-  const getStatusText = (val: number) => {
-    if (val < 35) return "Initializing FinTrack...";
-    if (val < 75) return "Syncing Financial Data...";
-    if (val < 100) return "Preparing Dashboard...";
-    return "Ready!";
+  const getSystemStatus = (val: number) => {
+    if (val < 25) return { code: "SYS_INIT", label: "INITIALIZING MATRIX..." };
+    if (val < 55) return { code: "VAULT_SYNC", label: "ENCRYPTING SESSION DATA..." };
+    if (val < 85) return { code: "DATA_PARSING", label: "CALIBRATING ANALYTICS..." };
+    if (val < 100) return { code: "CORE_READY", label: "FINALIZING HUD DISPLAY..." };
+    return { code: "SYSTEM_ONLINE", label: "ACCESS GRANTED" };
   };
+
+  const status = getSystemStatus(progress);
 
   return (
     <div
       className={cn(
-        "fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950 text-white p-6 transition-all duration-500 ease-out select-none",
-        isFadingOut ? "opacity-0 scale-105 pointer-events-none" : "opacity-100 scale-100"
+        "fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950 text-white p-6 transition-all duration-500 ease-out select-none overflow-hidden",
+        isFadingOut ? "opacity-0 scale-110 blur-md pointer-events-none" : "opacity-100 scale-100 blur-none"
       )}
     >
-      {/* Background Ambient Glow Effects */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-500/15 rounded-full blur-[100px] pointer-events-none animate-pulse" />
-      <div className="absolute bottom-1/3 left-1/2 -translate-x-1/2 w-96 h-96 bg-teal-500/10 rounded-full blur-[120px] pointer-events-none" />
+      {/* Sci-Fi Futuristic Grid Pattern Backdrop */}
+      <div className="absolute inset-0 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:32px_32px] opacity-10 pointer-events-none" />
 
-      {/* Main Content Area */}
-      <div className="flex flex-col items-center text-center space-y-8 max-w-sm w-full z-10">
+      {/* Cybernetic Ambient Light Orbs */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] bg-emerald-500/20 rounded-full blur-[130px] pointer-events-none animate-pulse" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-cyan-500/15 rounded-full blur-[90px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
+
+      {/* Main Futuristic HUD Loading Container */}
+      <div className="relative flex flex-col items-center justify-center space-y-10 z-10 max-w-sm w-full">
         
-        {/* PHASE 1: Website Name & Brand Splash */}
-        <div className="flex flex-col items-center space-y-3 transition-all duration-500 transform animate-in fade-in zoom-in-95">
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 rounded-3xl blur-md opacity-80 animate-pulse" />
-            <div className="relative w-20 h-20 bg-slate-900 rounded-3xl border border-emerald-500/40 flex items-center justify-center text-white shadow-2xl">
-              <TrendingUp className="w-10 h-10 text-emerald-400" />
-            </div>
-          </div>
+        {/* HUD Frame Brackets */}
+        <div className="relative p-8 flex items-center justify-center">
+          {/* Corner Frame Accents */}
+          <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-emerald-400/80 rounded-tl-sm shadow-[0_0_10px_rgba(52,211,153,0.6)]" />
+          <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-emerald-400/80 rounded-tr-sm shadow-[0_0_10px_rgba(52,211,153,0.6)]" />
+          <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-emerald-400/80 rounded-bl-sm shadow-[0_0_10px_rgba(52,211,153,0.6)]" />
+          <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-emerald-400/80 rounded-br-sm shadow-[0_0_10px_rgba(52,211,153,0.6)]" />
 
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
-              Fin<span className="text-emerald-400">Track</span>
-            </h1>
-            <p className="text-xs font-medium text-slate-400 mt-1 tracking-wide">
-              Personal Finance & Expense Manager
-            </p>
-          </div>
-        </div>
+          {/* Outer Dashed Rotating HUD Orbit Ring 1 */}
+          <div className="absolute w-56 h-56 rounded-full border border-dashed border-emerald-500/35 animate-[spin_16s_linear_infinite]" />
 
-        {/* PHASE 2: Round Loading Animation & 0-100% Counter (Fades & Slides in after Website Name Splash) */}
-        <div
-          className={cn(
-            "flex flex-col items-center space-y-6 transition-all duration-500 transform",
-            showLoadingRing
-              ? "opacity-100 translate-y-0 scale-100"
-              : "opacity-0 translate-y-4 scale-95 pointer-events-none"
-          )}
-        >
-          {/* Circular SVG Ring */}
-          <div className="relative flex items-center justify-center">
-            <svg className="w-36 h-36 transform -rotate-90" viewBox="0 0 120 120">
+          {/* Dotted Counter-Rotating HUD Ring 2 */}
+          <div className="absolute w-48 h-48 rounded-full border border-dotted border-cyan-400/40 animate-[spin_10s_linear_infinite_reverse]" />
+
+          {/* Glowing Outer Target Frame Container */}
+          <div className="absolute w-40 h-40 rounded-full bg-slate-900/80 backdrop-blur-md border border-emerald-500/30 shadow-[0_0_35px_rgba(16,185,129,0.3)]" />
+
+          {/* Central Progress SVG Circle */}
+          <div className="relative w-36 h-36 flex items-center justify-center">
+            <svg className="w-full h-full transform -rotate-90 drop-shadow-[0_0_14px_rgba(16,185,129,0.7)]" viewBox="0 0 120 120">
               <defs>
-                <linearGradient id="splashGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#10B981" />
-                  <stop offset="50%" stopColor="#14B8A6" />
-                  <stop offset="100%" stopColor="#06B6D4" />
+                <linearGradient id="futuristicGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#10b981" />
+                  <stop offset="50%" stopColor="#06b6d4" />
+                  <stop offset="100%" stopColor="#6366f1" />
                 </linearGradient>
               </defs>
 
-              {/* Background Track Circle */}
+              {/* Dark Track Ring */}
               <circle
                 cx="60"
                 cy="60"
                 r={radius}
-                className="text-slate-800/80"
-                strokeWidth="8"
+                className="text-slate-800/90"
+                strokeWidth="6"
                 stroke="currentColor"
                 fill="transparent"
               />
 
-              {/* Animated Progress Ring */}
+              {/* Glowing Neon Segment Arc */}
               <circle
                 cx="60"
                 cy="60"
                 r={radius}
-                stroke="url(#splashGradient)"
-                strokeWidth="8"
+                stroke="url(#futuristicGradient)"
+                strokeWidth="6"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"
                 fill="transparent"
-                className="transition-[stroke-dashoffset] duration-75 ease-linear"
+                className="transition-[stroke-dashoffset] duration-75 ease-out"
               />
             </svg>
 
-            {/* Centered Percentage Number Counter */}
+            {/* Center Core HUD Digital Counter */}
             <div className="absolute flex flex-col items-center justify-center text-center">
-              <span className="text-2xl font-black text-white tracking-tighter">
-                {progress}%
-              </span>
-              <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-400">
-                Loading
+              <div className="flex items-baseline space-x-0.5 font-mono">
+                <span className="text-3xl sm:text-4xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-emerald-300 via-teal-200 to-cyan-400 drop-shadow-[0_0_12px_rgba(16,185,129,0.6)]">
+                  {progress}
+                </span>
+                <span className="text-xs font-bold text-emerald-400 font-sans">%</span>
+              </div>
+              <span className="text-[9px] font-mono font-extrabold uppercase tracking-widest text-slate-400 mt-0.5">
+                LOADING
               </span>
             </div>
           </div>
+        </div>
 
-          {/* Dynamic Loading Status Text */}
-          <div className="h-6">
-            <p className="text-xs font-semibold text-slate-300 transition-all duration-300">
-              {getStatusText(progress)}
-            </p>
+        {/* Futuristic Status Indicator & Linear Progress Bar */}
+        <div className="w-full space-y-3 px-2">
+          {/* Neon Horizontal Progress Bar */}
+          <div className="relative w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-emerald-500/20 shadow-inner">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 transition-all duration-100 ease-out rounded-full shadow-[0_0_14px_rgba(16,185,129,0.9)]"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          {/* Monospace HUD Status Code & Message */}
+          <div className="flex items-center justify-between text-[11px] font-mono font-semibold px-1">
+            <span className="text-emerald-400 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              [{status.code}]
+            </span>
+            <span className="text-slate-400 tracking-wider font-sans text-[10px] font-bold uppercase">
+              {status.label}
+            </span>
           </div>
         </div>
 
@@ -170,3 +168,4 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
     </div>
   );
 };
+
