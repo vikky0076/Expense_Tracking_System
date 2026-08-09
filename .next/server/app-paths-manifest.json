@@ -1,19 +1,7 @@
 {
-  "/auth/magic-link/page": "app/auth/magic-link/page.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/auth/forgot-password/page": "app/auth/forgot-password/page.js",
-  "/auth/signin/page": "app/auth/signin/page.js",
-  "/auth/verify/page": "app/auth/verify/page.js",
-  "/fixed-expenses/page": "app/fixed-expenses/page.js",
-  "/income/page": "app/income/page.js",
-  "/auth/signup/page": "app/auth/signup/page.js",
-  "/expenses/page": "app/expenses/page.js",
   "/dashboard/page": "app/dashboard/page.js",
+  "/auth/signup/page": "app/auth/signup/page.js",
   "/planner/page": "app/planner/page.js",
-  "/export/page": "app/export/page.js",
-  "/page": "app/page.js",
-  "/profile/page": "app/profile/page.js",
-  "/settings/page": "app/settings/page.js",
-  "/welcome/page": "app/welcome/page.js",
-  "/insights/page": "app/insights/page.js"
+  "/insights/page": "app/insights/page.js",
+  "/expenses/page": "app/expenses/page.js"
 }

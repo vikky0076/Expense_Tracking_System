@@ -126,7 +126,7 @@ export default function WelcomePage() {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">Add Group Members</h4>
-                  <p className="text-xs text-slate-500">Track 5-member pooled monthly contributions</p>
+                  <p className="text-xs text-slate-500">Track pooled group monthly contributions</p>
                 </div>
               </div>
               <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />

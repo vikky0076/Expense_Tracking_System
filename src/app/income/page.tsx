@@ -36,7 +36,7 @@ export default function IncomePage() {
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             <Users className="w-6 h-6 text-emerald-600" />
-            Group Income & 5-Member Contributions
+            Group Income & Member Contributions
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             Group member cash for {getMonthLabel(selectedMonth)}

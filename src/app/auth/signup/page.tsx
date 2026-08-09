@@ -76,7 +76,7 @@ export default function SignUpPage() {
               Start your financial clarity journey today.
             </h2>
             <p className="text-emerald-100 text-xs mt-3 leading-relaxed">
-              Create a free account to track 5-member pooled expenses, recurring bills, proof receipts, and financial planner goals.
+              Create a free account to track group pooled expenses, recurring bills, proof receipts, and financial planner goals.
             </p>
           </div>
 

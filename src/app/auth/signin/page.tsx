@@ -97,7 +97,7 @@ export default function SignInPage() {
               Welcome back to your personal finance command center.
             </h2>
             <p className="text-emerald-100 text-xs mt-3 leading-relaxed">
-              Track 5-member pooled contributions, recurring bills, proof receipts, and instant financial reports.
+              Track group pooled contributions, recurring bills, proof receipts, and instant financial reports.
             </p>
           </div>
 

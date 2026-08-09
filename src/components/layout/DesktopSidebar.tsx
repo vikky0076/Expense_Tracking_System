@@ -96,7 +96,7 @@ export const DesktopSidebar: React.FC<{ onOpenAddModal: () => void }> = ({ onOpe
       </nav>
 
       {/* User Profile Badge at Bottom */}
-      <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+      <div className="p-4 border-t border-slate-100 bg-slate-50/50 space-y-2">
         <Link
           href="/profile"
           className="flex items-center gap-3 p-2 rounded-xl hover:bg-white transition-colors border border-transparent hover:border-slate-200"
@@ -113,6 +113,12 @@ export const DesktopSidebar: React.FC<{ onOpenAddModal: () => void }> = ({ onOpe
             </p>
           </div>
         </Link>
+
+        <div className="text-center pt-1 border-t border-slate-200/60">
+          <span className="text-[10px] font-extrabold text-emerald-600 tracking-tight">
+            Developed by VIGNESH
+          </span>
+        </div>
       </div>
     </aside>
   );

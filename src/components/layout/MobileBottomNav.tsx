@@ -2,13 +2,13 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Receipt,
   Plus,
   PieChart,
-  MoreHorizontal,
+  Grid,
   FileSpreadsheet,
   CalendarDays,
   Users,
@@ -18,6 +18,10 @@ import {
   Download,
   CheckSquare,
   CheckCircle2,
+  Wallet,
+  Target,
+  Compass,
+  Sparkles,
 } from "lucide-react";
 import { cn, getMonthLabel } from "@/lib/utils";
 import { useFinance } from "@/context/FinanceContext";
@@ -30,18 +34,89 @@ interface MobileBottomNavProps {
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenAddModal }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const { selectedMonth, selectedMonthExpenses } = useFinance();
+  
+  const [isRudderOpen, setIsRudderOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [exportSuccessMsg, setExportSuccessMsg] = useState<string | null>(null);
 
   const monthLabel = getMonthLabel(selectedMonth);
 
-  const mobileNavItems = [
+  // Quick Action items inside the Rudder Arc Speed-Dial Wheel
+  const rudderArcActions = [
+    {
+      id: "add-expense",
+      label: "New Expense",
+      icon: Plus,
+      color: "from-emerald-500 to-teal-500",
+      shadow: "shadow-emerald-500/40",
+      badge: "Primary",
+      action: () => {
+        onOpenAddModal();
+      },
+    },
+    {
+      id: "export-csv",
+      label: "Export CSV",
+      icon: Download,
+      color: "from-cyan-500 to-blue-500",
+      shadow: "shadow-cyan-500/40",
+      action: () => {
+        exportExpensesToCSV(selectedMonthExpenses, `expenses-${selectedMonth}.csv`);
+        setExportSuccessMsg("CSV Spreadsheet exported!");
+        setTimeout(() => setExportSuccessMsg(null), 3000);
+      },
+    },
+    {
+      id: "fixed-bills",
+      label: "Fixed Bills",
+      icon: CalendarDays,
+      color: "from-indigo-500 to-purple-500",
+      shadow: "shadow-indigo-500/40",
+      action: () => {
+        router.push("/fixed-expenses");
+      },
+    },
+    {
+      id: "add-income",
+      label: "Income & Pool",
+      icon: Wallet,
+      color: "from-amber-500 to-orange-500",
+      shadow: "shadow-amber-500/40",
+      action: () => {
+        router.push("/income");
+      },
+    },
+    {
+      id: "planner-goals",
+      label: "Planner & Goals",
+      icon: Target,
+      color: "from-purple-500 to-pink-500",
+      shadow: "shadow-purple-500/40",
+      action: () => {
+        router.push("/planner");
+      },
+    },
+  ];
+
+  // Arc fan-out positioning coordinates (radii: X, Y offsets for semi-circle arc above FAB)
+  const arcCoordinates = [
+    { x: -110, y: -40 },  // Left end
+    { x: -60,  y: -95 },  // Mid Left
+    { x: 0,    y: -115 }, // Top Center
+    { x: 60,   y: -95 },  // Mid Right
+    { x: 110,  y: -40 },  // Right end
+  ];
+
+  const leftNavItems = [
     { label: "Home", href: "/dashboard", icon: LayoutDashboard },
     { label: "Expenses", href: "/expenses", icon: Receipt },
-    { label: "Add", isAction: true, icon: Plus },
+  ];
+
+  const rightNavItems = [
     { label: "Insights", href: "/insights", icon: PieChart },
-    { label: "More", isMoreToggle: true, icon: MoreHorizontal },
+    { label: "More", isMoreToggle: true, icon: Grid },
   ];
 
   const moreMenuItems = [
@@ -85,108 +160,210 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenAddModal
     },
   ];
 
-  const handleQuickExportCSV = () => {
+  const toggleRudderMenu = () => {
     playClickSound();
-    exportExpensesToCSV(selectedMonthExpenses, `expenses-${selectedMonth}.csv`);
-    setExportSuccessMsg("CSV Spreadsheet exported successfully!");
-    setTimeout(() => setExportSuccessMsg(null), 3000);
+    setIsMoreOpen(false);
+    setIsRudderOpen((prev) => !prev);
+  };
+
+  const handleArcActionClick = (actionFn: () => void) => {
+    playClickSound();
+    setIsRudderOpen(false);
+    actionFn();
   };
 
   return (
     <>
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-2 py-1.5 shadow-lg pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
-        <div className="flex items-center justify-around max-w-md mx-auto relative">
-          {mobileNavItems.map((item, idx) => {
-            if (item.isAction) {
+      {/* Dark Glass Backdrop Overlay when Rudder Arc Menu is active */}
+      {isRudderOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
+          onClick={() => setIsRudderOpen(false)}
+        />
+      )}
+
+      {/* Floating Rudder Arc Speed-Dial Navigation items (Fanning Radial Arc above FAB) */}
+      {isRudderOpen && (
+        <div className="md:hidden fixed bottom-14 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+          <div className="relative w-0 h-0 flex items-center justify-center">
+            {rudderArcActions.map((item, idx) => {
+              const pos = arcCoordinates[idx] || { x: 0, y: -90 };
+              const Icon = item.icon;
+
               return (
-                <button
-                  key="add-btn"
-                  onClick={() => {
-                    playClickSound();
-                    onOpenAddModal();
+                <div
+                  key={item.id}
+                  className="absolute pointer-events-auto transition-transform flex flex-col items-center animate-arc-pop"
+                  style={{
+                    transform: `translate(${pos.x}px, ${pos.y}px)`,
+                    animationDelay: `${idx * 40}ms`,
                   }}
-                  className="flex flex-col items-center justify-center -mt-5 focus:outline-none group"
-                  aria-label="Add Expense"
                 >
-                  <div className="w-13 h-13 rounded-full bg-gradient-to-tr from-emerald-600 via-emerald-500 to-orange-500 text-white flex items-center justify-center shadow-lg shadow-emerald-600/35 border-3 border-white group-active:scale-95 transition-transform">
-                    <Plus className="w-7 h-7 stroke-[2.5]" />
-                  </div>
-                  <span className="text-[10px] font-bold text-emerald-700 mt-0.5">
-                    Add
-                  </span>
-                </button>
-              );
-            }
+                  <button
+                    onClick={() => handleArcActionClick(item.action)}
+                    className={cn(
+                      "w-12 h-12 rounded-full bg-gradient-to-tr text-white flex items-center justify-center shadow-xl border-2 border-white/20 active:scale-90 hover:scale-110 transition-all duration-200 group relative",
+                      item.color,
+                      item.shadow
+                    )}
+                    aria-label={item.label}
+                  >
+                    <Icon className="w-5 h-5 stroke-[2.5] transition-transform group-hover:rotate-12" />
+                    {item.badge && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-slate-900 animate-ping" />
+                    )}
+                  </button>
 
-            if (item.isMoreToggle) {
-              const isMoreActive =
-                isMoreOpen ||
-                ["/export", "/fixed-expenses", "/income", "/settings", "/profile"].includes(pathname);
+                  {/* Micro Tooltip Pill */}
+                  <span className="mt-1 px-2 py-0.5 text-[9px] font-bold text-slate-100 bg-slate-900/90 backdrop-blur-md rounded-md border border-slate-700/80 shadow-md whitespace-nowrap tracking-tight">
+                    {item.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Main Floating Bottom Navigation Dock with Smooth Concave Center Notch */}
+      <div className="md:hidden fixed bottom-3 left-3 right-3 sm:left-8 sm:right-8 max-w-md mx-auto z-40 select-none">
+        <div className="relative w-full h-[64px] flex items-center justify-between px-3 drop-shadow-[0_12px_30px_rgba(0,0,0,0.45)]">
+          {/* SVG Smooth Capsule Dock with Dipped Notch Curve */}
+          <svg
+            className="absolute inset-0 w-full h-full text-slate-900/95 backdrop-blur-xl"
+            viewBox="0 0 320 64"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M 32 0 L 110 0 C 124 0, 132 26, 160 26 C 188 26, 196 0, 210 0 L 288 0 C 305.6 0, 320 14.3, 320 32 C 320 49.7, 305.6 64, 288 64 L 32 64 C 14.3 64, 0 49.7, 0 32 C 0 14.3, 14.3 0, 32 0 Z"
+              fill="currentColor"
+              stroke="rgba(255, 255, 255, 0.15)"
+              strokeWidth="1"
+            />
+          </svg>
+
+          {/* Left Navigation Group */}
+          <div className="relative z-10 flex items-center space-x-1 sm:space-x-3 pl-1">
+            {leftNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
 
               return (
-                <button
-                  key="more-btn"
+                <Link
+                  key={item.href}
+                  href={item.href}
                   onClick={() => {
                     playClickSound();
-                    setIsMoreOpen((prev) => !prev);
+                    setIsRudderOpen(false);
+                    setIsMoreOpen(false);
                   }}
                   className={cn(
-                    "flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all duration-150 text-slate-500",
-                    isMoreActive && "text-emerald-600 font-bold"
+                    "flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 relative group",
+                    isActive
+                      ? "bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30"
+                      : "text-slate-400 hover:text-slate-200"
                   )}
-                  aria-label="More options"
                 >
-                  <MoreHorizontal
+                  <Icon
                     className={cn(
-                      "w-5 h-5 transition-transform",
-                      isMoreActive ? "text-emerald-600 scale-110" : "text-slate-400"
+                      "w-5 h-5 transition-transform duration-200",
+                      isActive ? "text-emerald-400 scale-110" : "text-slate-400 group-hover:scale-105"
                     )}
                   />
-                  <span
-                    className={cn(
-                      "text-[10px] mt-0.5 tracking-tight font-medium",
-                      isMoreActive && "font-bold text-emerald-600"
-                    )}
-                  >
-                    More
+                  <span className="text-[10px] mt-0.5 tracking-tight font-semibold">
+                    {item.label}
                   </span>
-                </button>
+                </Link>
               );
-            }
+            })}
+          </div>
 
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
+          {/* Elevated Circular Green FAB (Nestled inside the Concave Notch) */}
+          <div className="relative z-20 -mt-7 flex flex-col items-center">
+            <button
+              onClick={() => {
+                playClickSound();
+                setIsMoreOpen(false);
+                setIsRudderOpen(false);
+                onOpenAddModal();
+              }}
+              className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-700 via-emerald-600 to-teal-700 hover:from-emerald-800 hover:to-emerald-700 active:scale-95 text-white flex items-center justify-center shadow-[0_8px_22px_rgba(4,120,87,0.6)] border-2 border-emerald-400/30 transition-all duration-200 focus:outline-none group"
+              aria-label="Add Expense"
+            >
+              <Plus className="w-7 h-7 stroke-[3] transition-transform group-hover:scale-110" />
+            </button>
+          </div>
 
-            return (
-              <Link
-                key={item.href || idx}
-                href={item.href || "#"}
-                onClick={() => {
-                  playClickSound();
-                  setIsMoreOpen(false);
-                }}
-                className={cn(
-                  "flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all duration-150 text-slate-500",
-                  isActive && "text-emerald-600 font-bold"
-                )}
-              >
-                <Icon
+          {/* Right Navigation Group */}
+          <div className="relative z-10 flex items-center space-x-1 sm:space-x-3 pr-1">
+            {rightNavItems.map((item) => {
+              const Icon = item.icon;
+
+              if (item.isMoreToggle) {
+                const isMoreActive =
+                  isMoreOpen ||
+                  ["/export", "/fixed-expenses", "/income", "/settings", "/profile"].includes(pathname);
+
+                return (
+                  <button
+                    key="more-toggle-btn"
+                    onClick={() => {
+                      playClickSound();
+                      setIsRudderOpen(false);
+                      setIsMoreOpen((prev) => !prev);
+                    }}
+                    className={cn(
+                      "flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 relative group",
+                      isMoreActive
+                        ? "bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30"
+                        : "text-slate-400 hover:text-slate-200"
+                    )}
+                    aria-label="More Features"
+                  >
+                    <Icon
+                      className={cn(
+                        "w-5 h-5 transition-transform duration-200",
+                        isMoreActive ? "text-emerald-400 scale-110" : "text-slate-400 group-hover:scale-105"
+                      )}
+                    />
+                    <span className="text-[10px] mt-0.5 tracking-tight font-semibold">
+                      More
+                    </span>
+                  </button>
+                );
+              }
+
+              const isActive = pathname === item.href;
+
+              return (
+                <Link
+                  key={item.href || item.label}
+                  href={item.href || "#"}
+                  onClick={() => {
+                    playClickSound();
+                    setIsRudderOpen(false);
+                    setIsMoreOpen(false);
+                  }}
                   className={cn(
-                    "w-5 h-5 transition-transform",
-                    isActive ? "text-emerald-600 scale-110" : "text-slate-400"
-                  )}
-                />
-                <span
-                  className={cn(
-                    "text-[10px] mt-0.5 tracking-tight font-medium",
-                    isActive && "font-bold text-emerald-600"
+                    "flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 relative group",
+                    isActive
+                      ? "bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30"
+                      : "text-slate-400 hover:text-slate-200"
                   )}
                 >
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
+                  <Icon
+                    className={cn(
+                      "w-5 h-5 transition-transform duration-200",
+                      isActive ? "text-emerald-400 scale-110" : "text-slate-400 group-hover:scale-105"
+                    )}
+                  />
+                  <span className="text-[10px] mt-0.5 tracking-tight font-semibold">
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -195,29 +372,35 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenAddModal
         <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity"
             onClick={() => setIsMoreOpen(false)}
           />
 
           {/* Drawer Body */}
-          <div className="relative z-10 bg-white rounded-t-3xl border-t border-slate-200 p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))]">
-            {/* Drawer Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">All Features & Export</h3>
-                <p className="text-xs text-slate-500">Quick access to options and reports</p>
+          <div className="relative z-10 bg-white rounded-t-3xl border-t border-slate-200 p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+            {/* Drawer Handle / Header */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-1.5 bg-slate-200 rounded-full mb-3" />
+              <div className="flex items-center justify-between w-full border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <Compass className="w-5 h-5 text-emerald-600" />
+                    All Features & Controls
+                  </h3>
+                  <p className="text-xs text-slate-500">Quick access to options and reports</p>
+                </div>
+                <button
+                  onClick={() => setIsMoreOpen(false)}
+                  className="p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                onClick={() => setIsMoreOpen(false)}
-                className="p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-                aria-label="Close menu"
-              >
-                <X className="w-5 h-5" />
-              </button>
             </div>
 
             {/* Quick Export Banner Action */}
-            <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 p-4 rounded-2xl text-white shadow-md space-y-2">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-4 rounded-2xl text-white shadow-md space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <span className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider block">
@@ -226,7 +409,12 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenAddModal
                   <h4 className="text-xs sm:text-sm font-bold text-white">Export CSV for {monthLabel}</h4>
                 </div>
                 <button
-                  onClick={handleQuickExportCSV}
+                  onClick={() => {
+                    playClickSound();
+                    exportExpensesToCSV(selectedMonthExpenses, `expenses-${selectedMonth}.csv`);
+                    setExportSuccessMsg("CSV exported successfully!");
+                    setTimeout(() => setExportSuccessMsg(null), 3000);
+                  }}
                   className="px-3 py-2 rounded-xl bg-white text-emerald-700 hover:bg-emerald-50 text-xs font-black shadow-sm flex items-center gap-1.5 active:scale-95 transition-transform shrink-0"
                 >
                   <Download className="w-4 h-4 text-emerald-600" />
@@ -294,9 +482,17 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenAddModal
                 );
               })}
             </div>
+
+            {/* Developed by VIGNESH Footer Badge */}
+            <div className="pt-3 text-center border-t border-slate-100">
+              <span className="text-[11px] font-extrabold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200/80 inline-block shadow-xs">
+                Developed by VIGNESH
+              </span>
+            </div>
           </div>
         </div>
       )}
     </>
   );
 };
+

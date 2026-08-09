@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { ImageUploader } from "@/components/common/ImageUploader";
 import { Expense, ExpenseCategory, PaymentMethod } from "@/types";
 import { useFinance } from "@/context/FinanceContext";
+import { getTodayDateString } from "@/lib/utils";
 
 interface ExpenseModalProps {
   isOpen: boolean;
@@ -48,7 +49,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<ExpenseCategory>("Food");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(getTodayDateString());
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("UPI");
   const [description, setDescription] = useState("");
   const [proofUrl, setProofUrl] = useState<string | undefined>(undefined);
@@ -67,7 +68,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       setTitle("");
       setAmount("");
       setCategory("Food");
-      setDate(new Date().toISOString().split("T")[0]);
+      setDate(getTodayDateString());
       setPaymentMethod("UPI");
       setDescription("");
       setProofUrl(undefined);

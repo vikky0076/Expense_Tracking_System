@@ -7,6 +7,7 @@ import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { PlannerTask, PriorityLevel, TaskTimeframe } from "@/types";
 import { useFinance } from "@/context/FinanceContext";
+import { getTodayDateString } from "@/lib/utils";
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -23,7 +24,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(getTodayDateString());
   const [time, setTime] = useState("10:00 AM");
   const [priority, setPriority] = useState<PriorityLevel>("medium");
   const [category, setCategory] = useState("Finance");
@@ -42,7 +43,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     } else {
       setTitle("");
       setDescription("");
-      setDate(new Date().toISOString().split("T")[0]);
+      setDate(getTodayDateString());
       setTime("10:00 AM");
       setPriority("medium");
       setCategory("Finance");

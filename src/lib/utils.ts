@@ -30,6 +30,14 @@ export function getMonthKey(date: Date = new Date()): string {
   return `${yyyy}-${mm}`;
 }
 
+export function getTodayDateString(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function getMonthLabel(monthKey: string): string {
   if (!monthKey) return "";
   const [year, month] = monthKey.split("-");

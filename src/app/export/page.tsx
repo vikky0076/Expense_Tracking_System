@@ -106,7 +106,7 @@ export default function ExportPage() {
             <div>
               <h3 className="text-base font-bold text-slate-900">Formatted PDF Financial Statement</h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Generate a clean, print-ready PDF statement with 5-member contributions, fixed bills, itemized expenses, and net balances.
+                Generate a clean, print-ready PDF statement with group member contributions, fixed bills, itemized expenses, and net balances.
               </p>
             </div>
           </div>

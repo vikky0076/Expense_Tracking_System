@@ -48,7 +48,7 @@ export function setSoundEnabled(enabled: boolean): void {
 }
 
 /**
- * Play a subtle 60ms soft click sound for UI navigation & button presses.
+ * Play a crisp, pleasant Instagram/YouTube style micro-haptic touch pop sound.
  */
 export function playClickSound(): void {
   if (!isSoundEnabled()) return;
@@ -56,21 +56,40 @@ export function playClickSound(): void {
     const ctx = getAudioContext();
     if (!ctx) return;
 
+    const now = ctx.currentTime;
+
+    // Primary Instagram/YouTube micro-pop (Sine wave 880Hz -> 240Hz in 35ms)
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
     osc.type = "sine";
-    osc.frequency.setValueAtTime(520, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(320, ctx.currentTime + 0.05);
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.exponentialRampToValueAtTime(240, now + 0.035);
 
-    gain.gain.setValueAtTime(0.04, ctx.currentTime); // Soft volume
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+    gain.gain.setValueAtTime(0.09, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.038);
 
     osc.connect(gain);
     gain.connect(ctx.destination);
 
-    osc.start();
-    osc.stop(ctx.currentTime + 0.05);
+    osc.start(now);
+    osc.stop(now + 0.04);
+
+    // Tactile thud thump (Triangle wave 160Hz -> 60Hz) for authentic haptic feel
+    const oscThud = ctx.createOscillator();
+    const gainThud = ctx.createGain();
+    oscThud.type = "triangle";
+    oscThud.frequency.setValueAtTime(160, now);
+    oscThud.frequency.exponentialRampToValueAtTime(60, now + 0.025);
+
+    gainThud.gain.setValueAtTime(0.045, now);
+    gainThud.gain.exponentialRampToValueAtTime(0.001, now + 0.028);
+
+    oscThud.connect(gainThud);
+    gainThud.connect(ctx.destination);
+
+    oscThud.start(now);
+    oscThud.stop(now + 0.03);
   } catch (e) {
     // Ignore audio errors gracefully
   }

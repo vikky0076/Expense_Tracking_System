@@ -319,6 +319,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         createdAt: now,
         updatedAt: now,
       };
+
+      // Auto-set selected month to match the new expense's month so it appears immediately
+      if (newExp.date && newExp.date.length >= 7) {
+        const expMonth = newExp.date.substring(0, 7);
+        setSelectedMonth((prev) => (prev !== expMonth ? expMonth : prev));
+      }
+
       setExpenses((prev) => {
         const updated = [newExp, ...prev];
         saveToFirestore({ expenses: updated });

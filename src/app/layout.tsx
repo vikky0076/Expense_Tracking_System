@@ -12,7 +12,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: "FinTrack — Premium Expense Tracker & Finance Planner",
-  description: "Production-ready expense tracking, 5-member contribution manager, and personal finance planner.",
+  description: "Production-ready expense tracking, group contribution manager, and personal finance planner.",
 };
 
 export default function RootLayout({

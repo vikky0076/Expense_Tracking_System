@@ -59,7 +59,6 @@ export default function LandingPage() {
       <section className="relative pt-16 pb-20 px-4 sm:px-8 overflow-hidden bg-gradient-to-b from-white to-slate-50">
         <div className="max-w-4xl mx-auto text-center space-y-6 relative z-10">
           <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3.5 py-1.5 rounded-full text-xs font-bold shadow-xs">
-            <Sparkles className="w-4 h-4 text-orange-500" />
             <span>Production-Ready Financial Management System</span>
           </div>
 
@@ -72,7 +71,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto font-medium leading-relaxed">
-            The simple, modern way to track monthly spending, manage 5-member pooled group funds, organize fixed recurring bills, and attach receipt proofs.
+            The simple, modern way to track monthly spending, manage pooled group funds, organize fixed recurring bills, and attach receipt proofs.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
@@ -98,7 +97,7 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-slate-900">Monthly Budget Overview</h4>
-                    <p className="text-xs text-slate-500">5-Member Group Pool & Active Expenses</p>
+                    <p className="text-xs text-slate-500">Group Cash Pool & Active Expenses</p>
                   </div>
                 </div>
                 <span className="text-xs font-bold px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">
@@ -107,17 +106,17 @@ export default function LandingPage() {
               </div>
 
               <div className="grid grid-cols-3 gap-4">
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Monthly Cash</span>
-                  <span className="text-base font-black text-slate-900 block mt-0.5">Paid Cash</span>
+                <div className="p-3.5 bg-gradient-to-br from-emerald-50 to-teal-50/60 rounded-2xl border border-emerald-200/80 shadow-xs">
+                  <span className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider">Monthly Cash</span>
+                  <span className="text-base font-black text-emerald-600 block mt-0.5">Paid Cash</span>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Total Spent</span>
-                  <span className="text-base font-black text-slate-900 block mt-0.5">Tracked Items</span>
+                <div className="p-3.5 bg-gradient-to-br from-amber-50 to-orange-50/60 rounded-2xl border border-amber-200/80 shadow-xs">
+                  <span className="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider">Total Spent</span>
+                  <span className="text-base font-black text-amber-600 block mt-0.5">Tracked Items</span>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Savings Target</span>
-                  <span className="text-base font-black text-emerald-600 block mt-0.5">Net Reserve</span>
+                <div className="p-3.5 bg-gradient-to-br from-indigo-50 to-purple-50/60 rounded-2xl border border-indigo-200/80 shadow-xs">
+                  <span className="text-[10px] font-extrabold text-indigo-700 uppercase tracking-wider">Savings Target</span>
+                  <span className="text-base font-black text-indigo-600 block mt-0.5">Net Reserve</span>
                 </div>
               </div>
             </div>
@@ -153,9 +152,9 @@ export default function LandingPage() {
             <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center">
               <Users className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-slate-900">5-Member Group Pool</h3>
+            <h3 className="text-base font-bold text-slate-900">Group Cash Pool</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Track 5-member pooled contributions, monthly payments, paid/unpaid status, and totals.
+              Track member pooled contributions, monthly payments, paid/unpaid status, and totals.
             </p>
           </div>
 
@@ -296,8 +295,9 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 border-t border-slate-200 text-center text-xs text-slate-400">
-        © {new Date().getFullYear()} FinTrack App. All rights reserved.
+      <footer className="py-8 px-4 border-t border-slate-200 text-center text-xs text-slate-400 space-y-1.5">
+        <p>© {new Date().getFullYear()} FinTrack App. All rights reserved.</p>
+        <p className="text-emerald-600 font-extrabold text-xs">Developed by VIGNESH</p>
       </footer>
     </div>
   );
